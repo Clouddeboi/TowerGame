@@ -1,14 +1,19 @@
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
+    private PlayerInputActions inputActions;
+    private Vector2 movementInput;
+
     [Header("Movement")]
     private float moveSpeed;
     public float walkSpeed;
     public float sprintSpeedMultiplier;
     public float groundDrag;
+    private bool isSprinting;
 
     [Header("Jumping")]
     public float jumpForce;
@@ -55,6 +60,24 @@ public class PlayerMovement : MonoBehaviour
         readyToJump = true;
     }
 
+    private void OnEnable()
+    {
+        inputActions = new PlayerInputActions();
+        inputActions.Player.Enable();
+
+        inputActions.Player.Move.performed += ctx => movementInput = ctx.ReadValue<Vector2>();
+        inputActions.Player.Move.canceled += ctx => movementInput = Vector2.zero;
+
+        inputActions.Player.Jump.performed += ctx => OnJumpPressed();
+        inputActions.Player.Sprint.performed += ctx => isSprinting = true;
+        inputActions.Player.Sprint.canceled += ctx => isSprinting = false;
+    }
+
+    private void OnDisable()
+    {
+        inputActions.Player.Disable();
+    }
+
     private void Update()
     {
         //Ground Check
@@ -78,16 +101,16 @@ public class PlayerMovement : MonoBehaviour
 
     private void MyInput()
     {
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
+        horizontalInput = movementInput.x;
+        verticalInput = movementInput.y;
+    }
 
-        //When to jump
-        if(Input.GetKey(jumpKey) && readyToJump && grounded)
+    private void OnJumpPressed()
+    {
+        if (readyToJump && grounded)
         {
             readyToJump = false;
-
             Jump();
-
             Invoke(nameof(ResetJump), jumpCooldown);
         }
     }
@@ -95,7 +118,7 @@ public class PlayerMovement : MonoBehaviour
     private void StateHandler()
     {
         //Mode = Sprinting
-        if(grounded && Input.GetKey(sprintKey))
+        if(grounded && isSprinting)
         {
             state = MovementStates.sprinting;
             moveSpeed = walkSpeed * sprintSpeedMultiplier;
