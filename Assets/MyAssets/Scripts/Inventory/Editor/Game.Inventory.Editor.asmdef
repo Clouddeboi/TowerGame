@@ -1,0 +1,19 @@
+{
+    "name": "Game.Inventory.Editor",
+    "rootNamespace": "Game.Inventory.Editor",
+    "references": [
+        "Game.Inventory.Runtime",
+        "Game.Inventory.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
