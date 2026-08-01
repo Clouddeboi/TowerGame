@@ -202,6 +202,10 @@ public void EditorSetQuestItemData(bool hasData, Payloads.QuestItemData data)
     hasQuestItemData = hasData;
     questItemPayload = data;
 }
+public void EditorSetDisplayNameKey(string newDisplayNameKey)
+{
+    displayNameKey = newDisplayNameKey;
+}
 #endif
     }
 }
