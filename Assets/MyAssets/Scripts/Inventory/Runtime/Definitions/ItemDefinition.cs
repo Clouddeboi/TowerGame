@@ -1,4 +1,5 @@
 using Game.Inventory.Core;
+using Game.Inventory.Definitions.Payloads;
 using UnityEngine;
 
 namespace Game.Inventory.Definitions
@@ -88,6 +89,41 @@ namespace Game.Inventory.Definitions
 
         [SerializeField]
         private GameObject useVisualEffect;
+
+        [Header("Type Specific Data")]
+        [SerializeField]
+        private WeaponData weaponPayload;
+
+        [SerializeField]
+        private ArmorData armorPayload;
+
+        [SerializeField]
+        private ConsumableData consumablePayload;
+
+        [SerializeField]
+        private QuestItemData questItemPayload;
+
+        [Header("Type Specific Data")]
+        [SerializeField]
+        private bool hasWeaponData;
+
+        [SerializeField]
+        private bool hasArmorData;
+
+        [SerializeField]
+        private bool hasConsumableData;
+
+        [SerializeField]
+        private bool hasQuestItemData;
+        public WeaponData WeaponPayload => hasWeaponData ? weaponPayload : null;
+        public ArmorData ArmorPayload => hasArmorData ? armorPayload : null;
+        public ConsumableData ConsumablePayload => hasConsumableData ? consumablePayload : null;
+        public QuestItemData QuestItemPayload => hasQuestItemData ? questItemPayload : null;
+
+        public bool HasWeaponData => hasWeaponData;
+        public bool HasArmorData => hasArmorData;
+        public bool HasConsumableData => hasConsumableData;
+        public bool HasQuestItemData => hasQuestItemData;
 
         //Identity
         public ItemId Id => new ItemId(itemId);
