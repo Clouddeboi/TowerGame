@@ -126,7 +126,7 @@ namespace Game.Inventory.Definitions
         public bool HasQuestItemData => hasQuestItemData;
 
         //Identity
-        public ItemId Id => new ItemId(itemId);
+        public ItemId Id => string.IsNullOrWhiteSpace(itemId) ? ItemId.Empty : new ItemId(itemId);
         public string RawId => itemId;
         public string DisplayNameKey => displayNameKey;
         public string DescriptionKey => descriptionKey;
@@ -183,8 +183,25 @@ namespace Game.Inventory.Definitions
         }
 
 #if UNITY_EDITOR
-        //editor-only setter used by the Create Item wizard (not yet implemented)
-        public void EditorSetId(string newId) => itemId = newId;
+public void EditorSetId(string newId) => itemId = newId;
+
+public void EditorSetStackable(bool stackable, int maxStack)
+{
+    isStackable = stackable;
+    maxStackSize = maxStack;
+}
+
+public void EditorSetWeaponData(bool hasData, Payloads.WeaponData data)
+{
+    hasWeaponData = hasData;
+    weaponPayload = data;
+}
+
+public void EditorSetQuestItemData(bool hasData, Payloads.QuestItemData data)
+{
+    hasQuestItemData = hasData;
+    questItemPayload = data;
+}
 #endif
     }
 }
