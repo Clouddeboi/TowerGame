@@ -211,6 +211,40 @@ public void EditorSetConsumableData(bool hasData, Payloads.ConsumableData data)
     hasConsumableData = hasData;
     consumablePayload = data;
 }
+public void EditorSetDescriptionKey(string newDescriptionKey)
+{
+    descriptionKey = newDescriptionKey;
+}
+
+public void EditorSetWeight(float newWeight)
+{
+    weight = newWeight;
+}
+
+public void EditorSetBaseValue(int newBaseValue)
+{
+    baseValue = newBaseValue;
+}
+
+public void EditorSetCategoryAndRarity(ItemCategoryDefinition newCategory, ItemCategoryDefinition newSubcategory, ItemRarityDefinition newRarity)
+{
+    category = newCategory;
+    subcategory = newSubcategory;
+    rarity = newRarity;
+}
+
+public void EditorSetPermissions(bool newCanBeDropped, bool newCanBeSold, bool newIsQuestItem, bool newCanBeAssignedToQuickSlot)
+{
+    canBeDropped = newCanBeDropped;
+    canBeSold = newCanBeSold;
+    isQuestItem = newIsQuestItem;
+    canBeAssignedToQuickSlot = newCanBeAssignedToQuickSlot;
+}
+
+public void EditorSetIcon(Sprite newIcon)
+{
+    icon = newIcon;
+}
 #endif
     }
 }

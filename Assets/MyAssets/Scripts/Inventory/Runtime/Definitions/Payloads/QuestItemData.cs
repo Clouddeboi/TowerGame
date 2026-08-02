@@ -26,5 +26,16 @@ namespace Game.Inventory.Definitions.Payloads
         public bool CanBeRemoved => canBeRemoved;
         public bool HiddenBeforeDiscovery => hiddenBeforeDiscovery;
         public bool AllowDuplicates => allowDuplicates;
+
+#if UNITY_EDITOR
+public void EditorSetValues(string newQuestId, int newMinimumQuestStage, bool newCanBeRemoved, bool newHiddenBeforeDiscovery, bool newAllowDuplicates)
+{
+    questId = newQuestId;
+    minimumQuestStage = newMinimumQuestStage;
+    canBeRemoved = newCanBeRemoved;
+    hiddenBeforeDiscovery = newHiddenBeforeDiscovery;
+    allowDuplicates = newAllowDuplicates;
+}
+#endif
     }
 }

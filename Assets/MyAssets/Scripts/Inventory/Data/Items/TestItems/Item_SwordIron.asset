@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 676fe59f2d4a67e45a3347784ad1be26, type: 3}
+  m_Name: Item_SwordIron
+  m_EditorClassIdentifier: Game.Inventory.Runtime::Game.Inventory.Definitions.ItemDefinition
+  itemId: sword_iron_01
+  displayNameKey: item.sword_iron.name
+  descriptionKey: item.sword_iron.description
+  developerNotes: 
+  icon: {fileID: 0}
+  worldModelPrefab: {fileID: 0}
+  equippedModelPrefab: {fileID: 0}
+  category: {fileID: 11400000, guid: 51fa470ab43c12d479f2b43897733995, type: 2}
+  subcategory: {fileID: 0}
+  rarity: {fileID: 11400000, guid: 4968e7f8c35ad9c429c87abd08aedd23, type: 2}
+  gameplayTags: []
+  weight: 8
+  baseValue: 45
+  isStackable: 0
+  maxStackSize: 1
+  canBeDropped: 1
+  canBeSold: 1
+  isQuestItem: 0
+  canBeAssignedToQuickSlot: 0
+  useSound: {fileID: 0}
+  pickupSound: {fileID: 0}
+  equipSound: {fileID: 0}
+  animationId: 
+  useVisualEffect: {fileID: 0}
+  weaponPayload:
+    weaponType: 0
+    baseDamage: 12
+    attackSpeed: 1.1
+    staminaCost: 5
+    range: 1
+    handRequirement: 0
+    damageType: 0
+    criticalChance: 0.05
+    criticalMultiplier: 1.5
+    canBlock: 0
+    requiredCharacterLevel: 1
+    requiredAttributes: []
+    weaponPrefabOverride: {fileID: 0}
+    animationSetId: 
+    projectileDefinition:
+      projectilePrefab: {fileID: 0}
+      projectileSpeed: 0
+    builtInEnchantment: {fileID: 0}
+    durabilitySettings:
+      usesDurability: 1
+      maxDurability: 100
+      durabilityLossPerHit: 1
+  armorPayload:
+    equipmentSlot: 0
+    armorType: 0
+    armorRating: 0
+    attributeRequirements: []
+    resistances: []
+    equippedCharacterModel: {fileID: 0}
+    firstPersonModelOverride: {fileID: 0}
+    setId: 
+    durabilitySettings:
+      usesDurability: 0
+      maxDurability: 100
+      durabilityLossPerHit: 1
+  consumablePayload:
+    effects: []
+    effectStrengthMultiplier: 0
+    duration: 0
+    numberOfUses: 0
+    cooldownSeconds: 0
+    consumptionAnimationId: 
+    usableDuringCombat: 0
+    removedAfterUse: 0
+  questItemPayload:
+    questId: 
+    minimumQuestStage: 0
+    canBeRemoved: 1
+    hiddenBeforeDiscovery: 0
+    allowDuplicates: 0
+  hasWeaponData: 1
+  hasArmorData: 0
+  hasConsumableData: 0
+  hasQuestItemData: 0

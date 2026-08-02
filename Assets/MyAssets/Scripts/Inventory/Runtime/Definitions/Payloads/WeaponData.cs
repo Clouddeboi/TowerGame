@@ -107,6 +107,17 @@ namespace Game.Inventory.Definitions.Payloads
         public ProjectileDefinition ProjectileDefinition => projectileDefinition;
         public ItemEffect BuiltInEnchantment => builtInEnchantment;
         public WeaponDurabilitySettings DurabilitySettings => durabilitySettings;
+
+#if UNITY_EDITOR
+public void EditorSetCoreStats(WeaponType newWeaponType, float newBaseDamage, float newAttackSpeed, HandRequirement newHandRequirement, DamageType newDamageType)
+{
+    weaponType = newWeaponType;
+    baseDamage = newBaseDamage;
+    attackSpeed = newAttackSpeed;
+    handRequirement = newHandRequirement;
+    damageType = newDamageType;
+}
+#endif
     }
 
     [System.Serializable]

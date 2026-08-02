@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 676fe59f2d4a67e45a3347784ad1be26, type: 3}
+  m_Name: Item_PotionHealth
+  m_EditorClassIdentifier: Game.Inventory.Runtime::Game.Inventory.Definitions.ItemDefinition
+  itemId: potion_health_01
+  displayNameKey: item.potion_health.name
+  descriptionKey: item.potion_health.description
+  developerNotes: 
+  icon: {fileID: 0}
+  worldModelPrefab: {fileID: 0}
+  equippedModelPrefab: {fileID: 0}
+  category: {fileID: 11400000, guid: 1d4828d789a68c1439f45f04b0d72e29, type: 2}
+  subcategory: {fileID: 0}
+  rarity: {fileID: 11400000, guid: 4968e7f8c35ad9c429c87abd08aedd23, type: 2}
+  gameplayTags: []
+  weight: 0.5
+  baseValue: 15
+  isStackable: 1
+  maxStackSize: 20
+  canBeDropped: 1
+  canBeSold: 1
+  isQuestItem: 0
+  canBeAssignedToQuickSlot: 1
+  useSound: {fileID: 0}
+  pickupSound: {fileID: 0}
+  equipSound: {fileID: 0}
+  animationId: 
+  useVisualEffect: {fileID: 0}
+  weaponPayload:
+    weaponType: 0
+    baseDamage: 0
+    attackSpeed: 0
+    staminaCost: 0
+    range: 0
+    handRequirement: 0
+    damageType: 0
+    criticalChance: 0
+    criticalMultiplier: 1.5
+    canBlock: 0
+    requiredCharacterLevel: 0
+    requiredAttributes: []
+    weaponPrefabOverride: {fileID: 0}
+    animationSetId: 
+    projectileDefinition:
+      projectilePrefab: {fileID: 0}
+      projectileSpeed: 0
+    builtInEnchantment: {fileID: 0}
+    durabilitySettings:
+      usesDurability: 0
+      maxDurability: 100
+      durabilityLossPerHit: 1
+  armorPayload:
+    equipmentSlot: 0
+    armorType: 0
+    armorRating: 0
+    attributeRequirements: []
+    resistances: []
+    equippedCharacterModel: {fileID: 0}
+    firstPersonModelOverride: {fileID: 0}
+    setId: 
+    durabilitySettings:
+      usesDurability: 0
+      maxDurability: 100
+      durabilityLossPerHit: 1
+  consumablePayload:
+    effects:
+    - {fileID: 11400000, guid: 5571458f4397d1b45b2b610df5aa01dd, type: 2}
+    effectStrengthMultiplier: 1
+    duration: 0
+    numberOfUses: 1
+    cooldownSeconds: 0
+    consumptionAnimationId: 
+    usableDuringCombat: 1
+    removedAfterUse: 1
+  questItemPayload:
+    questId: 
+    minimumQuestStage: 0
+    canBeRemoved: 1
+    hiddenBeforeDiscovery: 0
+    allowDuplicates: 0
+  hasWeaponData: 0
+  hasArmorData: 0
+  hasConsumableData: 1
+  hasQuestItemData: 0
