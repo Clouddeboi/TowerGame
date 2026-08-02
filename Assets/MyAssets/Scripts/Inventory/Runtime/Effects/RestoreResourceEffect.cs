@@ -33,5 +33,13 @@ namespace Game.Inventory.Effects
             context.StatModifiers.RestoreResource(resourceId, amount);
             return ItemEffectResult.Success();
         }
+
+        #if UNITY_EDITOR
+        public void EditorSetValues(string newResourceId, float newAmount)
+        {
+            resourceId = newResourceId;
+            amount = newAmount;
+        }
+        #endif
     }
 }

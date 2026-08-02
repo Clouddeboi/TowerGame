@@ -195,6 +195,44 @@ namespace Game.Inventory.Operations
             return RemoveItemResult.Success(quantity, entry.Instance, true);
         }
 
+        //removes a specific quantity from a specific instance, decrementing rather than
+        //necessarily removing the whole entry, used by ItemUseService when consuming one
+        //unit of a stack, e.g. drinking one potion out of a stack of five
+        public RemoveItemResult RemoveInstanceQuantity(ItemInstanceId instanceId, int quantity)
+        {
+            InventoryEntry entry = _container.FindEntryByInstanceId(instanceId);
+
+            if (entry == null)
+            {
+                RaiseFailure(InventoryFailureReason.InstanceNotFound, "inventory.instance_not_found");
+                return RemoveItemResult.Failure(quantity, InventoryFailureReason.InstanceNotFound, "inventory.instance_not_found");
+            }
+
+            if (quantity <= 0 || quantity > entry.Instance.Quantity)
+            {
+                RaiseFailure(InventoryFailureReason.InvalidQuantity, "inventory.invalid_quantity");
+                return RemoveItemResult.Failure(quantity, InventoryFailureReason.InvalidQuantity, "inventory.invalid_quantity");
+            }
+
+            int oldQuantity = entry.Instance.Quantity;
+            entry.Instance.SetQuantity(oldQuantity - quantity);
+
+            _events?.RaiseItemQuantityChanged(new ItemQuantityChangedEvent(entry.Instance.InstanceId, oldQuantity, entry.Instance.Quantity));
+
+            bool fullyConsumed = false;
+
+            if (entry.Instance.Quantity == 0)
+            {
+                _container.RemoveEntry(entry);
+                fullyConsumed = true;
+                _events?.RaiseItemRemoved(new ItemRemovedEvent(entry.Instance.DefinitionId, quantity, true));
+            }
+
+            _events?.RaiseInventoryChanged(new InventoryChangedEvent(_container));
+
+            return RemoveItemResult.Success(quantity, entry.Instance, fullyConsumed);
+        }
+
         public InventoryOperationResult SplitStack(ItemInstanceId sourceInstanceId, int splitQuantity)
         {
             InventoryEntry sourceEntry = _container.FindEntryByInstanceId(sourceInstanceId);

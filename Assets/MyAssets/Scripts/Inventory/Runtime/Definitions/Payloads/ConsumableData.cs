@@ -39,5 +39,18 @@ namespace Game.Inventory.Definitions.Payloads
         public string ConsumptionAnimationId => consumptionAnimationId;
         public bool UsableDuringCombat => usableDuringCombat;
         public bool RemovedAfterUse => removedAfterUse;
+
+#if UNITY_EDITOR
+public ConsumableData(ItemEffect[] effects, float effectStrengthMultiplier, float duration, int numberOfUses, float cooldownSeconds, bool usableDuringCombat, bool removedAfterUse)
+{
+    this.effects = effects;
+    this.effectStrengthMultiplier = effectStrengthMultiplier;
+    this.duration = duration;
+    this.numberOfUses = numberOfUses;
+    this.cooldownSeconds = cooldownSeconds;
+    this.usableDuringCombat = usableDuringCombat;
+    this.removedAfterUse = removedAfterUse;
+}
+#endif
     }
 }

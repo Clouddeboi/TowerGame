@@ -206,6 +206,11 @@ public void EditorSetDisplayNameKey(string newDisplayNameKey)
 {
     displayNameKey = newDisplayNameKey;
 }
+public void EditorSetConsumableData(bool hasData, Payloads.ConsumableData data)
+{
+    hasConsumableData = hasData;
+    consumablePayload = data;
+}
 #endif
     }
 }
