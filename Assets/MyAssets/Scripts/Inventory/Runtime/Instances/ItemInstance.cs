@@ -25,6 +25,14 @@ namespace Game.Inventory.Instances
         private List<AppliedTemporaryEffect> _temporaryEffects;
         private Dictionary<string, string> _questState;
 
+        private bool _preventUnequip;
+        public bool PreventUnequip => _preventUnequip;
+
+        public void SetPreventUnequip(bool prevent)
+        {
+            _preventUnequip = prevent;
+}
+
         //internal constructor, creation goes through ItemInstanceFactory only
         //so instance id uniqueness stays guaranteed in one place
         internal ItemInstance(ItemInstanceId instanceId, ItemId definitionId, int quantity)
