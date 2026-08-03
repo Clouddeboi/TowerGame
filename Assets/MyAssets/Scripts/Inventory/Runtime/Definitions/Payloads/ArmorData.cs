@@ -16,7 +16,7 @@ namespace Game.Inventory.Definitions.Payloads
     public class ArmorData
     {
         [SerializeField]
-        private EquipmentSlotType equipmentSlot;
+        private Game.Inventory.Equipment.EquipmentSlotDefinition equipmentSlot;
 
         [SerializeField]
         private ArmorType armorType;
@@ -45,7 +45,7 @@ namespace Game.Inventory.Definitions.Payloads
         [SerializeField]
         private WeaponDurabilitySettings durabilitySettings;
 
-        public EquipmentSlotType EquipmentSlot => equipmentSlot;
+        public Game.Inventory.Equipment.EquipmentSlotDefinition EquipmentSlot => equipmentSlot;
         public ArmorType ArmorType => armorType;
         public float ArmorRating => armorRating;
         public AttributeRequirement[] AttributeRequirements => attributeRequirements;

@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5af0177ee9597764cb00b01cd64a5be3, type: 3}
   m_Name: ItemDatabase
   m_EditorClassIdentifier: Game.Inventory.Runtime::Game.Inventory.Definitions.ItemDatabase
-  definitions: []
+  definitions:
+  - {fileID: 11400000, guid: ba50abd0ae309324f94fc980225f174d, type: 2}
+  - {fileID: 11400000, guid: 7eb4bff625f17654380960eb95ead9ad, type: 2}
+  - {fileID: 11400000, guid: 0bbcc24e50f1be644be67c5215bdd068, type: 2}
