@@ -17,3 +17,4 @@ MonoBehaviour:
   emptySlotIcon: {fileID: 0}
   alsoOccupiesSlots:
   - {fileID: 11400000, guid: cbd6953afe4e63343865719f88960803, type: 2}
+  - {fileID: 11400000, guid: fa7b44a65f7848a41b60dc8269ee1bfe, type: 2}

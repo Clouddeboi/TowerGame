@@ -117,6 +117,11 @@ public void EditorSetCoreStats(WeaponType newWeaponType, float newBaseDamage, fl
     handRequirement = newHandRequirement;
     damageType = newDamageType;
 }
+public void EditorSetRequirements(int newRequiredCharacterLevel, AttributeRequirement[] newRequiredAttributes)
+{
+    requiredCharacterLevel = newRequiredCharacterLevel;
+    requiredAttributes = newRequiredAttributes;
+}
 #endif
     }
 

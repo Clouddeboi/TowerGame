@@ -54,6 +54,13 @@ namespace Game.Inventory.Definitions.Payloads
         public GameObject FirstPersonModelOverride => firstPersonModelOverride;
         public string SetId => setId;
         public WeaponDurabilitySettings DurabilitySettings => durabilitySettings;
+
+#if UNITY_EDITOR
+public void EditorSetSlot(Game.Inventory.Equipment.EquipmentSlotDefinition slot)
+{
+    equipmentSlot = slot;
+}
+#endif
     }
 
     [System.Serializable]

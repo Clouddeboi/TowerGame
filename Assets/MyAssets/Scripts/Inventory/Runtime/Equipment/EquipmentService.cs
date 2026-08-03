@@ -119,7 +119,7 @@ namespace Game.Inventory.Equipment
             }
 
             //remove the item being equipped from inventory before committing the loadout change
-            RemoveItemResult removeResult = _inventoryService.RemoveInstanceQuantity(instanceId, entry.Instance.Quantity);
+            RemoveItemResult removeResult = _inventoryService.RemoveInstance(instanceId);
 
             if (!removeResult.Succeeded)
             {

@@ -245,6 +245,11 @@ public void EditorSetIcon(Sprite newIcon)
 {
     icon = newIcon;
 }
+public void EditorSetArmorData(bool hasData, Payloads.ArmorData data)
+{
+    hasArmorData = hasData;
+    armorPayload = data;
+}
 #endif
     }
 }
