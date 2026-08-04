@@ -101,5 +101,9 @@ namespace Game.Inventory.QuickSlots
 
             return int.TryParse(suffix, out int index) ? index : -1;
         }
+
+        //internal test only accessor for the pure naming convention logic, keeps the public
+        //surface of this MonoBehaviour limited to what a composition root actually needs
+        internal int TestResolveSlotIndexFromActionName(string actionName) => ResolveSlotIndexFromActionName(actionName);
     }
 }
