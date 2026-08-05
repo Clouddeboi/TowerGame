@@ -1,6 +1,7 @@
 using Game.Inventory.Containers;
 using Game.Inventory.Definitions;
 using Game.Inventory.Equipment;
+using Game.Inventory.Instances;
 using Game.Inventory.Interfaces;
 using Game.Inventory.QuickSlots;
 using UnityEngine;
@@ -101,6 +102,51 @@ namespace Game.Inventory.UI.Presenters
             }
 
             return false;
+        }
+
+        //equipped items live in EquipmentLoadout, not in an InventoryEntry, so this overload
+        //builds directly from an ItemInstance for panels that display equipped gear
+        public ItemDisplayData BuildForEquippedInstance(ItemInstance instance, bool isEquipped)
+        {
+            if (!_database.TryResolve(instance.DefinitionId, out ItemDefinition definition))
+            {
+                return new ItemDisplayData(
+                    instanceId: instance.InstanceId.ToString(),
+                    displayName: _localization.Resolve("item.unknown"),
+                    icon: null,
+                    quantity: instance.Quantity,
+                    totalWeight: 0f,
+                    totalValue: 0,
+                    rarityDisplayName: string.Empty,
+                    rarityColor: Color.gray,
+                    rarityAccessibilityLabel: "?",
+                    isEquipped: isEquipped,
+                    isAssignedToQuickSlot: false,
+                    isQuestItem: false,
+                    isFavorite: false,
+                    categoryDisplayName: string.Empty);
+            }
+
+            string rarityName = definition.Rarity != null ? _localization.Resolve(definition.Rarity.DisplayNameKey) : string.Empty;
+            Color rarityColor = definition.Rarity != null ? definition.Rarity.UiColor : Color.white;
+            string rarityAccessibilityLabel = definition.Rarity != null ? definition.Rarity.AccessibilityLabelKey : string.Empty;
+            string categoryName = definition.Category != null ? _localization.Resolve(definition.Category.DisplayNameKey) : string.Empty;
+
+            return new ItemDisplayData(
+                instanceId: instance.InstanceId.ToString(),
+                displayName: _localization.Resolve(definition.DisplayNameKey),
+                icon: definition.Icon,
+                quantity: instance.Quantity,
+                totalWeight: definition.Weight * instance.Quantity,
+                totalValue: definition.BaseValue * instance.Quantity,
+                rarityDisplayName: rarityName,
+                rarityColor: rarityColor,
+                rarityAccessibilityLabel: rarityAccessibilityLabel,
+                isEquipped: isEquipped,
+                isAssignedToQuickSlot: false,
+                isQuestItem: definition.IsQuestItem,
+                isFavorite: false,
+                categoryDisplayName: categoryName);
         }
     }
 }

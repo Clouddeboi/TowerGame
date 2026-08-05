@@ -133,5 +133,20 @@ namespace Game.Inventory.Effects
             _events?.RaiseOperationFailed(new OperationFailedEvent(reason, messageKey));
             return UseItemResult.Failure(reason, messageKey);
         }
+
+        //remaining cooldown in seconds for a definition, 0 if not on cooldown, used by the
+        //quick slot bar UI to render a cooldown overlay, secondsElapsed uses the same clock
+        //the caller passes to Use, so the view stays consistent with whatever time source
+        //the composition root wires up
+        public float GetRemainingCooldown(ItemId definitionId, float secondsElapsed)
+        {
+            if (!_cooldownExpiryBySecondsElapsed.TryGetValue(definitionId, out float expiry))
+            {
+                return 0f;
+            }
+
+            float remaining = expiry - secondsElapsed;
+            return remaining > 0f ? remaining : 0f;
+        }
     }
 }
