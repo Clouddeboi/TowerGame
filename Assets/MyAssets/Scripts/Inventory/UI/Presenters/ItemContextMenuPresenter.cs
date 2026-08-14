@@ -51,15 +51,17 @@ namespace Game.Inventory.UI.Presenters
         {
             var actions = new List<ContextMenuActionData>();
 
-            InventoryEntry entry = FindEntry(instanceId);
+            ItemInstance instance = FindInstanceAnywhere(instanceId);
 
-            if (entry == null || !_database.TryResolve(entry.Instance.DefinitionId, out ItemDefinition definition))
+            if (instance == null || !_database.TryResolve(instance.DefinitionId, out ItemDefinition definition))
             {
                 return actions;
             }
 
-            bool isEquipped = IsEquipped(entry.Instance);
-            bool isAssignedToQuickSlot = IsAssignedToQuickSlot(entry.Instance.DefinitionId);
+            bool isEquipped = IsEquipped(instance);
+            bool isAssignedToQuickSlot = IsAssignedToQuickSlot(instance.DefinitionId);
+            int quantity = instance.Quantity;
+            bool isFavorite = FindEntry(instanceId)?.IsFavorite ?? false;
 
             if (definition.HasConsumableData)
             {
@@ -86,7 +88,7 @@ namespace Game.Inventory.UI.Presenters
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.RemoveFromQuickSlot, "context.remove_quick_slot"));
             }
 
-            if (entry.Instance.Quantity > 1)
+            if (quantity > 1)
             {
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.SplitStack, "context.split_stack"));
             }
@@ -98,13 +100,10 @@ namespace Game.Inventory.UI.Presenters
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Compare, "context.compare"));
             }
 
-            actions.Add(entry.IsFavorite
+            actions.Add(isFavorite
                 ? ContextMenuActionData.Available(ContextMenuActionKind.Unfavorite, "context.unfavorite")
                 : ContextMenuActionData.Available(ContextMenuActionKind.Favorite, "context.favorite"));
 
-            //dropping a currently equipped item is intentionally omitted rather than
-            //shown disabled, unequip is the correct path first, offering a disabled
-            //"drop" with no obvious next step is worse ux than simply not showing it
             if (definition.CanBeDropped && !isEquipped)
             {
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Drop, "context.drop"));
@@ -114,8 +113,6 @@ namespace Game.Inventory.UI.Presenters
 
             if (definition.IsQuestItem && definition.HasQuestItemData && !definition.QuestItemPayload.CanBeRemoved)
             {
-                //explicitly shown disabled with a reason here, since a player might
-                //reasonably wonder why a quest item cannot be destroyed
                 actions.Add(ContextMenuActionData.Disabled(ContextMenuActionKind.Destroy, "context.destroy", "context.reason_quest_item_protected"));
             }
             else
@@ -271,6 +268,26 @@ namespace Game.Inventory.UI.Presenters
                 if (entry.Instance.InstanceId.ToString() == instanceId)
                 {
                     return entry;
+                }
+            }
+
+            return null;
+        }
+
+        private ItemInstance FindInstanceAnywhere(string instanceId)
+        {
+            InventoryEntry entry = FindEntry(instanceId);
+
+            if (entry != null)
+            {
+                return entry.Instance;
+            }
+
+            foreach (var kvp in _loadout.EquippedBySlot)
+            {
+                if (kvp.Value.InstanceId.ToString() == instanceId)
+                {
+                    return kvp.Value;
                 }
             }
 

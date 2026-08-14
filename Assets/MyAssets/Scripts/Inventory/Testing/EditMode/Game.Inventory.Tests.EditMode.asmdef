@@ -3,6 +3,7 @@
     "rootNamespace": "Game.Inventory.Tests",
     "references": [
         "Game.Inventory.Runtime",
+        "Game.Inventory.UI",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
