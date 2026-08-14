@@ -1,4 +1,5 @@
 using Game.Inventory.Core;
+using Game.Inventory.Instances;
 using UnityEngine;
 
 namespace Game.Inventory.WorldItems
@@ -7,7 +8,7 @@ namespace Game.Inventory.WorldItems
     //the actual pickup transaction to WorldItemPickupService, never mutates inventory
     //state directly itself
     public class WorldItemPickup : MonoBehaviour
-    {
+    {        
         [SerializeField]
         private string itemDefinitionId;
 
@@ -31,6 +32,16 @@ namespace Game.Inventory.WorldItems
 
         private WorldItemPickupService _pickupService;
         private bool _isPickedUp;
+
+        private ItemInstance _preservedInstanceState;
+
+        //called by ItemDropSpawner immediately after instantiation, before the pickup is
+        //ever interacted with, carries over durability, enchantments, and other unique
+        //runtime state from the instance that was dropped
+        public void SetPreservedInstanceState(ItemInstance instance)
+        {
+            _preservedInstanceState = instance;
+        }
 
         //wired by the composition root, same pattern as QuickSlotInputBridge
         public void Initialize(WorldItemPickupService pickupService)
@@ -62,7 +73,9 @@ namespace Game.Inventory.WorldItems
                 return;
             }
 
-            WorldItemPickupResult result = _pickupService.TryPickup(new ItemId(itemDefinitionId), quantity);
+            WorldItemPickupResult result = _preservedInstanceState != null
+                ? _pickupService.TryPickupPreservedInstance(_preservedInstanceState)
+                : _pickupService.TryPickup(new ItemId(itemDefinitionId), quantity);
 
             if (!result.succeeded)
             {

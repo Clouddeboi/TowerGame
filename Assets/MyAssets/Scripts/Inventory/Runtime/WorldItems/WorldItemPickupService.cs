@@ -50,5 +50,35 @@ namespace Game.Inventory.WorldItems
 
             return WorldItemPickupResult.Success(pickedUp, remainder);
         }
+
+        //picks up a world item that carries preserved instance state (durability, enchantments,
+        //custom name, etc) rather than minting a fresh instance, used when the item being
+        //picked up was previously dropped from an existing ItemInstance, see ItemDropSpawner
+        //unlike TryPickup, this does not merge into existing stacks, since a stateful instance
+        //is never stack compatible with a plain one by definition
+        public WorldItemPickupResult TryPickupPreservedInstance(Instances.ItemInstance sourceInstance)
+        {
+            if (sourceInstance == null)
+            {
+                return WorldItemPickupResult.Failure(InventoryFailureReason.InstanceNotFound, "pickup.instance_not_found", 0);
+            }
+
+            if (!_database.TryResolve(sourceInstance.DefinitionId, out ItemDefinition definition))
+            {
+                return WorldItemPickupResult.Failure(InventoryFailureReason.DefinitionNotFound, "pickup.definition_not_found", sourceInstance.Quantity);
+            }
+
+            if (!_inventoryService.Container.CanAdd(definition, sourceInstance.Quantity))
+            {
+                return WorldItemPickupResult.Failure(InventoryFailureReason.InventoryFull, "pickup.no_space", sourceInstance.Quantity);
+            }
+
+            _inventoryService.Container.AddEntry(new Containers.InventoryEntry(sourceInstance));
+            _events?.RaiseItemAdded(new ItemAddedEvent(sourceInstance, sourceInstance.Quantity));
+            _events?.RaiseInventoryChanged(new InventoryChangedEvent(_inventoryService.Container));
+            _events?.RaiseItemDiscovered(new ItemDiscoveredEvent(sourceInstance.DefinitionId));
+
+            return WorldItemPickupResult.Success(sourceInstance.Quantity, 0);
+        }
     }
 }
