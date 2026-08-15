@@ -250,6 +250,10 @@ public void EditorSetArmorData(bool hasData, Payloads.ArmorData data)
     hasArmorData = hasData;
     armorPayload = data;
 }
+public void EditorSetWorldModelPrefab(GameObject prefab)
+{
+    worldModelPrefab = prefab;
+}
 #endif
     }
 }
