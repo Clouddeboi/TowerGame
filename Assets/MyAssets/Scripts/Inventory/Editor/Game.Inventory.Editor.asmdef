@@ -3,7 +3,9 @@
     "rootNamespace": "Game.Inventory.Editor",
     "references": [
         "Game.Inventory.Runtime",
-        "Game.Inventory.UI"
+        "Game.Inventory.UI",
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [
         "Editor"
