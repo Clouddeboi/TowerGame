@@ -21,7 +21,7 @@ MonoBehaviour:
   equippedModelPrefab: {fileID: 0}
   category: {fileID: 11400000, guid: 51fa470ab43c12d479f2b43897733995, type: 2}
   subcategory: {fileID: 0}
-  rarity: {fileID: 11400000, guid: 4968e7f8c35ad9c429c87abd08aedd23, type: 2}
+  rarity: {fileID: 11400000, guid: afdd911660a236f41a56f87138cd8531, type: 2}
   gameplayTags: []
   weight: 0
   baseValue: 0
