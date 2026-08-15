@@ -5,4 +5,5 @@
   <Project Path="Game.Inventory.Tests.EditMode.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Game.Inventory.Tests.PlayMode.csproj" />
+  <Project Path="Game.Inventory.Editor.csproj" />
 </Solution>
