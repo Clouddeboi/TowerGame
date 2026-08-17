@@ -177,6 +177,7 @@ namespace Game.Inventory.Editor
             SetSize(rarityBorder, new Vector2(44f, 44f));
             var borderImage = rarityBorder.GetComponent<Image>();
             borderImage.color = Color.clear;
+            borderImage.raycastTarget = false;
 
             GameObject textColumn = CreateChild(root.transform, "TextColumn", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
             textColumn.GetComponent<LayoutElement>().flexibleWidth = 1f;
@@ -412,6 +413,7 @@ namespace Game.Inventory.Editor
             AssignField(detailsView, "rootPanel", panel);
             AssignField(detailsView, "nameText", nameText);
             AssignField(detailsView, "descriptionText", descriptionText);
+            AssignField(detailsView, "iconPreviewImage", iconPreview);
             AssignField(detailsView, "statRowParent", statRowParent.transform);
             AssignField(detailsView, "statRowPrefab", statRowPrefab);
             AssignField(detailsView, "requirementsNotMetWarning", requirementsWarning);
@@ -808,7 +810,9 @@ namespace Game.Inventory.Editor
             GameObject go = CreateChild(parent, name, typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             SetSize(go, new Vector2(16f, 16f));
             go.GetComponent<LayoutElement>().preferredWidth = 16f;
-            go.GetComponent<Image>().color = color;
+            var image = go.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
             go.SetActive(false);
             return go;
         }
@@ -817,7 +821,9 @@ namespace Game.Inventory.Editor
         {
             GameObject go = FindOrCreateChild(parent, name, typeof(Image));
             SetSize(go, size);
-            return go.GetComponent<Image>();
+            var image = go.GetComponent<Image>();
+            image.raycastTarget = false;
+            return image;
         }
 
         private static TMP_Text CreateTmpChild(Transform parent, string name, float fontSize, TextAlignmentOptions alignment)

@@ -28,6 +28,8 @@ namespace Game.Inventory.UI.Entries
         private readonly List<InventoryEntryView> _pool = new List<InventoryEntryView>();
         private IReadOnlyList<ItemDisplayData> _currentData = new List<ItemDisplayData>();
         private System.Action<string> _onEntrySelected;
+        private System.Action<string, Vector2> _onHoverStarted;
+        private System.Action _onHoverEnded;
 
         public void SetSelectionHandler(System.Action<string> onEntrySelected)
         {
@@ -75,6 +77,10 @@ namespace Game.Inventory.UI.Entries
             {
                 InventoryEntryView entry = Instantiate(entryPrefab, content);
                 entry.Selected += OnEntrySelected;
+
+                entry.HoverStarted += OnEntryHoverStarted;
+                entry.HoverEnded += OnEntryHoverEnded;
+
                 _pool.Add(entry);
             }
 
@@ -136,8 +142,27 @@ namespace Game.Inventory.UI.Entries
                 if (entry != null)
                 {
                     entry.Selected -= OnEntrySelected;
+                    entry.HoverStarted -= OnEntryHoverStarted;
+                    entry.HoverEnded -= OnEntryHoverEnded;
                 }
             }
+        }
+
+        public void SetHoverHandler(System.Action<string, Vector2> onHoverStarted, System.Action onHoverEnded)
+        {
+            _onHoverStarted = onHoverStarted;
+            _onHoverEnded = onHoverEnded;
+        }
+
+        private void OnEntryHoverStarted(string instanceId, Vector2 screenPosition)
+        {
+            Debug.Log($"PooledEntryList relaying hover for {instanceId} at {screenPosition}");
+            _onHoverStarted?.Invoke(instanceId, screenPosition);
+        }
+
+        private void OnEntryHoverEnded()
+        {
+            _onHoverEnded?.Invoke();
         }
     }
 }

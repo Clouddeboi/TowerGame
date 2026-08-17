@@ -2,12 +2,13 @@ using Game.Inventory.UI.Presenters;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
 
 namespace Game.Inventory.UI.Entries
 {
     //renders a single ItemDisplayData, purely presentational, forwards clicks as an
     //event with the bound instanceId, holds no inventory logic and no service references
-    public class InventoryEntryView : MonoBehaviour
+    public class InventoryEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [SerializeField]
         private Image iconImage;
@@ -42,6 +43,8 @@ namespace Game.Inventory.UI.Entries
         private string _boundInstanceId;
 
         public event System.Action<string> Selected;
+        public event System.Action<string, Vector2> HoverStarted;
+        public event System.Action HoverEnded;
 
         private void Awake()
         {
@@ -108,6 +111,20 @@ namespace Game.Inventory.UI.Entries
         private void OnSelectClicked()
         {
             Selected?.Invoke(_boundInstanceId);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            Debug.Log($"Pointer entered entry: {_boundInstanceId}");
+            if (!string.IsNullOrEmpty(_boundInstanceId))
+            {
+                HoverStarted?.Invoke(_boundInstanceId, eventData.position);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            HoverEnded?.Invoke();
         }
     }
 }

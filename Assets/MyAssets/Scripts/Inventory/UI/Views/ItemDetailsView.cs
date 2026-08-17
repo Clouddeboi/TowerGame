@@ -1,6 +1,7 @@
 using Game.Inventory.UI.Presenters;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Game.Inventory.UI.Views
 {
@@ -10,6 +11,9 @@ namespace Game.Inventory.UI.Views
     {
         [SerializeField]
         private GameObject rootPanel;
+
+        [SerializeField]
+        private Image iconPreviewImage;
 
         [SerializeField]
         private TMP_Text nameText;
@@ -56,6 +60,12 @@ namespace Game.Inventory.UI.Views
             if (descriptionText != null)
             {
                 descriptionText.text = viewModel.descriptionText;
+            }
+
+            if (iconPreviewImage != null)
+            {
+                iconPreviewImage.sprite = viewModel.baseDisplayData.icon;
+                iconPreviewImage.enabled = viewModel.baseDisplayData.icon != null;
             }
 
             ClearStatRows();
