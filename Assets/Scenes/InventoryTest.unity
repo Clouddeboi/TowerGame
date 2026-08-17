@@ -663,6 +663,7 @@ GameObject:
   - component: {fileID: 52115045}
   - component: {fileID: 52115046}
   - component: {fileID: 52115047}
+  - component: {fileID: 52115048}
   m_Layer: 0
   m_Name: LeftPane
   m_TagString: Untagged
@@ -857,6 +858,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Inventory.UI::Game.Inventory.UI.Screens.TransferPaneView
   titleText: {fileID: 589239298}
   entryList: {fileID: 1888097741}
+--- !u!114 &52115048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52115035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a8311bd930ed274d8c3fdae9fbc7de6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Inventory.UI::Game.Inventory.UI.Screens.TransferPaneView
+  titleText: {fileID: 589239298}
+  entryList: {fileID: 1888097742}
 --- !u!1 &58267605
 GameObject:
   m_ObjectHideFlags: 0
@@ -1645,8 +1660,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Inventory.UI::Game.Inventory.UI.Screens.TransferScreenView
   rootPanel: {fileID: 131484980}
-  leftPane: {fileID: 52115047}
-  rightPane: {fileID: 1871456711}
+  leftPane: {fileID: 52115048}
+  rightPane: {fileID: 1871456712}
   transferOneButton: {fileID: 937743573}
   transferStackButton: {fileID: 1258040411}
   quantityField: {fileID: 1293169212}
@@ -2977,6 +2992,7 @@ RectTransform:
   - {fileID: 253335990}
   - {fileID: 1675369390}
   - {fileID: 131484981}
+  - {fileID: 743904961}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3791,6 +3807,81 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 331350024}
+  m_CullTransparentMesh: 1
+--- !u!1 &337602793
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 337602794}
+  - component: {fileID: 337602796}
+  - component: {fileID: 337602795}
+  m_Layer: 0
+  m_Name: IconImage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &337602794
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 337602793}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 743904961}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 48, y: 48}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &337602795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 337602793}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &337602796
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 337602793}
   m_CullTransparentMesh: 1
 --- !u!1 &360513744
 GameObject:
@@ -6032,6 +6123,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 1172807060}
+        m_TargetAssemblyTypeName: Game.Inventory.UI.Entries.PooledEntryList, Game.Inventory.UI
+        m_MethodName: OnScrollChanged
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &559116428
 GameObject:
   m_ObjectHideFlags: 0
@@ -7725,6 +7828,71 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &743904960
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 743904961}
+  - component: {fileID: 743904962}
+  - component: {fileID: 743904963}
+  m_Layer: 0
+  m_Name: DragGhost
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &743904961
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 743904960}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 337602794}
+  m_Father: {fileID: 272265198}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 48, y: 48}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &743904962
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 743904960}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
+--- !u!114 &743904963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 743904960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3249add3c95eaf141a0893238893bb41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Inventory.UI::Game.Inventory.UI.DragAndDrop.DragGhostView
+  iconImage: {fileID: 337602795}
+  rootRectTransform: {fileID: 743904961}
+  canvasGroup: {fileID: 743904962}
 --- !u!1 &747690385
 GameObject:
   m_ObjectHideFlags: 0
@@ -8196,6 +8364,18 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
       - m_Target: {fileID: 1888097741}
+        m_TargetAssemblyTypeName: Game.Inventory.UI.Entries.PooledEntryList, Game.Inventory.UI
+        m_MethodName: OnScrollChanged
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1888097742}
         m_TargetAssemblyTypeName: Game.Inventory.UI.Entries.PooledEntryList, Game.Inventory.UI
         m_MethodName: OnScrollChanged
         m_Mode: 0
@@ -9440,6 +9620,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ea3c356f4c178b54892478e6e4df4427, type: 2}
   - {fileID: 11400000, guid: a7d78f1eee7630f449d980bdf76ef603, type: 2}
   - {fileID: 11400000, guid: 787b6d652447dbd44b071a18f213905b, type: 2}
+  dragGhostView: {fileID: 743904963}
   playerMaxWeight: 100
   inventoryScreenView: {fileID: 69362633}
   itemDetailsView: {fileID: 208468525}
@@ -11275,6 +11456,7 @@ GameObject:
   - component: {fileID: 1210357679}
   - component: {fileID: 1210357680}
   - component: {fileID: 1210357681}
+  - component: {fileID: 1210357682}
   m_Layer: 0
   m_Name: Content
   m_TagString: Untagged
@@ -11455,6 +11637,23 @@ MonoBehaviour:
   rowHeight: 56
   bufferRows: 4
 --- !u!114 &1210357681
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210357670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93a5a3cda070a2c4aa54d36602c1c3d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Inventory.UI::Game.Inventory.UI.Entries.PooledEntryList
+  viewport: {fileID: 2119968929}
+  content: {fileID: 1210357671}
+  entryPrefab: {fileID: 8840812123758737900, guid: c212f27ff864bc747a811927e6a5e864, type: 3}
+  rowHeight: 56
+  bufferRows: 4
+--- !u!114 &1210357682
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -17434,6 +17633,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 1210357682}
+        m_TargetAssemblyTypeName: Game.Inventory.UI.Entries.PooledEntryList, Game.Inventory.UI
+        m_MethodName: OnScrollChanged
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1863268856
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17505,6 +17716,7 @@ GameObject:
   - component: {fileID: 1871456709}
   - component: {fileID: 1871456710}
   - component: {fileID: 1871456711}
+  - component: {fileID: 1871456712}
   m_Layer: 0
   m_Name: RightPane
   m_TagString: Untagged
@@ -17699,6 +17911,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Inventory.UI::Game.Inventory.UI.Screens.TransferPaneView
   titleText: {fileID: 58267608}
   entryList: {fileID: 1210357681}
+--- !u!114 &1871456712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871456699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a8311bd930ed274d8c3fdae9fbc7de6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Inventory.UI::Game.Inventory.UI.Screens.TransferPaneView
+  titleText: {fileID: 58267608}
+  entryList: {fileID: 1210357682}
 --- !u!1 &1871773982
 GameObject:
   m_ObjectHideFlags: 0
@@ -18043,6 +18269,7 @@ GameObject:
   - component: {fileID: 1888097739}
   - component: {fileID: 1888097740}
   - component: {fileID: 1888097741}
+  - component: {fileID: 1888097742}
   m_Layer: 0
   m_Name: Content
   m_TagString: Untagged
@@ -18223,6 +18450,23 @@ MonoBehaviour:
   rowHeight: 56
   bufferRows: 4
 --- !u!114 &1888097741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1888097730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93a5a3cda070a2c4aa54d36602c1c3d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Inventory.UI::Game.Inventory.UI.Entries.PooledEntryList
+  viewport: {fileID: 1725711039}
+  content: {fileID: 1888097731}
+  entryPrefab: {fileID: 8840812123758737900, guid: c212f27ff864bc747a811927e6a5e864, type: 3}
+  rowHeight: 56
+  bufferRows: 4
+--- !u!114 &1888097742
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

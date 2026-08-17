@@ -26,6 +26,7 @@ namespace Game.Inventory.UI.Views
         private Button useButton;
 
         private int _slotIndex;
+        public int SlotIndex => _slotIndex;
 
         public event System.Action<int> UseRequested;
 

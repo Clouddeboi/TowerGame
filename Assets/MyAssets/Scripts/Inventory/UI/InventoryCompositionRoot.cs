@@ -27,6 +27,7 @@ namespace Game.Inventory.UI
         [SerializeField] private QuickSlotBehaviourConfig quickSlotConfig;
         [SerializeField] private InventoryModeConfig inventoryModeConfig;
         [SerializeField] private List<EquipmentSlotDefinition> equipmentSlots;
+        [SerializeField] private DragAndDrop.DragGhostView dragGhostView;
 
         [Header("Capacity")]
         [SerializeField] private float playerMaxWeight = 100f;
@@ -151,10 +152,10 @@ namespace Game.Inventory.UI
                 entryList.SetHoverHandler(
                     (instanceId, screenPos) =>
                     {
-                        Debug.Log($"Attempting tooltip for {instanceId}");
+                        //Debug.Log($"Attempting tooltip for {instanceId}");
                         if (tooltipPresenter.TryBuild(instanceId, out var tooltipData))
                         {
-                            Debug.Log($"Tooltip data built: {tooltipData.displayName}, showing at {screenPos}");
+                            //Debug.Log($"Tooltip data built: {tooltipData.displayName}, showing at {screenPos}");
                             tooltipView.Show(tooltipData, screenPos);
                         }
                         else
@@ -164,6 +165,14 @@ namespace Game.Inventory.UI
                     },
                     () => tooltipView.Hide());
             }
+
+            var dragCoordinator = new DragAndDrop.PointerDragCoordinator(
+            _dragDropController,
+            dragGhostView,
+            equipmentSlots,
+            message => errorToastView.ShowMessage(message ?? "Action failed."));
+
+            entryList?.SetDragCoordinator(dragCoordinator);
 
             if (inventoryScreenView == null) Debug.LogError("inventoryScreenView is null", this);
             if (confirmationDialogView == null) Debug.LogError("confirmationDialogView is null", this);

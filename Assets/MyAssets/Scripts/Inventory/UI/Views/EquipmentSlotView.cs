@@ -76,11 +76,20 @@ namespace Game.Inventory.UI.Views
                     unequipButton.gameObject.SetActive(false);
                 }
             }
+            
+            SetSlotId(data.slotId);
         }
 
         private void OnUnequipClicked()
         {
             UnequipRequested?.Invoke(_slotId);
+        }
+
+        public string SlotId { get; private set; }
+
+        public void SetSlotId(string slotId)
+        {
+            SlotId = slotId;
         }
     }
 }

@@ -8,7 +8,7 @@ namespace Game.Inventory.UI.Entries
 {
     //renders a single ItemDisplayData, purely presentational, forwards clicks as an
     //event with the bound instanceId, holds no inventory logic and no service references
-    public class InventoryEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class InventoryEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         [SerializeField]
         private Image iconImage;
@@ -46,6 +46,13 @@ namespace Game.Inventory.UI.Entries
         public event System.Action<string, Vector2> HoverStarted;
         public event System.Action HoverEnded;
 
+        public event System.Action<string, Sprite, Vector2> DragStarted;
+        public event System.Action<Vector2> DragMoved;
+        public event System.Action<string, Vector2> DragEnded;
+
+        private Sprite _boundIcon;
+        public string BoundInstanceId => _boundInstanceId;
+
         private void Awake()
         {
             if (selectButton != null)
@@ -65,6 +72,7 @@ namespace Game.Inventory.UI.Entries
         public void Bind(ItemDisplayData data)
         {
             _boundInstanceId = data.instanceId;
+            _boundIcon = data.icon;
 
             if (iconImage != null)
             {
@@ -115,7 +123,7 @@ namespace Game.Inventory.UI.Entries
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            Debug.Log($"Pointer entered entry: {_boundInstanceId}");
+            //Debug.Log($"Pointer entered entry: {_boundInstanceId}");
             if (!string.IsNullOrEmpty(_boundInstanceId))
             {
                 HoverStarted?.Invoke(_boundInstanceId, eventData.position);
@@ -125,6 +133,34 @@ namespace Game.Inventory.UI.Entries
         public void OnPointerExit(PointerEventData eventData)
         {
             HoverEnded?.Invoke();
+        }
+
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            if (string.IsNullOrEmpty(_boundInstanceId))
+            {
+                return;
+            }
+
+            DragStarted?.Invoke(_boundInstanceId, _boundIcon, eventData.position);
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            DragMoved?.Invoke(eventData.position);
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            DragEnded?.Invoke(_boundInstanceId, eventData.position);
+        }
+
+        public void OnInitializePotentialDrag(PointerEventData eventData)
+        {
+            //claim this drag for ourselves rather than letting the ancestor ScrollRect
+            //treat it as a scroll gesture, this is the standard uGUI pattern for making
+            //a child inside a ScrollRect independently draggable
+            eventData.pointerDrag = gameObject;
         }
     }
 }

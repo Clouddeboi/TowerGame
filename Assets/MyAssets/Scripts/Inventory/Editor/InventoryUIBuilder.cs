@@ -14,6 +14,7 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using Game.Inventory.UI.DragAndDrop;
 
 namespace Game.Inventory.Editor
 {
@@ -69,6 +70,9 @@ namespace Game.Inventory.Editor
             GameObject transferRoot = BuildTransferScreen(canvas.transform, entryPrefab, out TransferScreenView transferScreenView);
             transferRoot.SetActive(false);
 
+            BuildDragGhost(canvas.transform, out DragGhostView dragGhostView);
+            dragGhostView.transform.SetAsLastSibling();
+
             QuickSlotInputBridge inputBridge = FindOrCreateQuickSlotInputBridge();
 
             InventoryScreenView inventoryScreenView = screenRoot.GetComponent<InventoryScreenView>();
@@ -81,6 +85,8 @@ namespace Game.Inventory.Editor
             AssignField(inventoryScreenView, "rootPanel", screenRoot);
 
             InventoryCompositionRoot compositionRoot = FindOrCreateCompositionRoot();
+
+            AssignField(compositionRoot, "dragGhostView", dragGhostView);
 
             AssignField(compositionRoot, "itemDatabase", LoadFirstAsset<ItemDatabase>());
             AssignField(compositionRoot, "quickSlotConfig", quickSlotConfig);
@@ -767,6 +773,35 @@ namespace Game.Inventory.Editor
             AssignField(paneView, "entryList", pooledList);
 
             return paneView;
+        }
+
+        private static GameObject BuildDragGhost(Transform parent, out DragGhostView view)
+        {
+            GameObject go = FindOrCreateChild(parent, "DragGhost", typeof(CanvasGroup));
+            SetSize(go, new Vector2(48f, 48f));
+
+            var canvasGroup = go.GetComponent<CanvasGroup>();
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
+            Image icon = CreateImageChild(go.transform, "IconImage", new Vector2(48f, 48f));
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.pivot = new Vector2(0.5f, 0.5f);
+
+            view = go.GetComponent<DragGhostView>();
+            if (view == null) view = go.AddComponent<DragGhostView>();
+
+            AssignField(view, "iconImage", icon);
+            AssignField(view, "rootRectTransform", rt);
+            AssignField(view, "canvasGroup", canvasGroup);
+
+            go.SetActive(false);
+
+            //must render above every other panel, make it the last sibling so it draws on top
+            go.transform.SetAsLastSibling();
+
+            return go;
         }
 
         // ---------- small GameObject helpers ----------

@@ -31,6 +31,8 @@ namespace Game.Inventory.UI.Entries
         private System.Action<string, Vector2> _onHoverStarted;
         private System.Action _onHoverEnded;
 
+        private DragAndDrop.PointerDragCoordinator _dragCoordinator;
+
         public void SetSelectionHandler(System.Action<string> onEntrySelected)
         {
             _onEntrySelected = onEntrySelected;
@@ -82,6 +84,7 @@ namespace Game.Inventory.UI.Entries
                 entry.HoverEnded += OnEntryHoverEnded;
 
                 _pool.Add(entry);
+                _dragCoordinator?.Attach(entry);
             }
 
             //pool only grows, never shrinks mid-session, avoids repeated
@@ -144,6 +147,7 @@ namespace Game.Inventory.UI.Entries
                     entry.Selected -= OnEntrySelected;
                     entry.HoverStarted -= OnEntryHoverStarted;
                     entry.HoverEnded -= OnEntryHoverEnded;
+                    _dragCoordinator?.Detach(entry);
                 }
             }
         }
@@ -156,13 +160,18 @@ namespace Game.Inventory.UI.Entries
 
         private void OnEntryHoverStarted(string instanceId, Vector2 screenPosition)
         {
-            Debug.Log($"PooledEntryList relaying hover for {instanceId} at {screenPosition}");
+            //Debug.Log($"PooledEntryList relaying hover for {instanceId} at {screenPosition}");
             _onHoverStarted?.Invoke(instanceId, screenPosition);
         }
 
         private void OnEntryHoverEnded()
         {
             _onHoverEnded?.Invoke();
+        }
+
+        public void SetDragCoordinator(DragAndDrop.PointerDragCoordinator coordinator)
+        {
+            _dragCoordinator = coordinator;
         }
     }
 }
