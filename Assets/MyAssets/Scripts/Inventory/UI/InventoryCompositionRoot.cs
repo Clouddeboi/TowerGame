@@ -174,6 +174,36 @@ namespace Game.Inventory.UI
 
             entryList?.SetDragCoordinator(dragCoordinator);
 
+            entryList?.SetContextMenuHandler((instanceId, screenPos) =>
+            {
+                var actions = _contextMenuPresenter.BuildActions(instanceId);
+                contextMenuView.Show(instanceId, actions);
+
+                var rt = contextMenuView.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.position = screenPos;
+                }
+            });
+
+            contextMenuView.ActionChosen += (kind, instanceId) =>
+            {
+                bool isDestructive = kind == ContextMenuActionKind.Destroy || kind == ContextMenuActionKind.Drop;
+
+                if (isDestructive)
+                {
+                    ConfirmationService.Request(
+                        "confirm.title",
+                        kind == ContextMenuActionKind.Destroy ? "confirm.destroy_message" : "confirm.drop_message",
+                        () => _contextMenuPresenter.Execute(kind, instanceId, null, Time.time),
+                        null);
+                }
+                else
+                {
+                    _contextMenuPresenter.Execute(kind, instanceId, null, Time.time);
+                }
+            };
+
             if (inventoryScreenView == null) Debug.LogError("inventoryScreenView is null", this);
             if (confirmationDialogView == null) Debug.LogError("confirmationDialogView is null", this);
             if (errorToastView == null) Debug.LogError("errorToastView is null", this);
@@ -212,6 +242,8 @@ namespace Game.Inventory.UI
             _inventoryScreenPresenter.Bind();
             _itemDetailsPresenter.Bind();
             _equipmentPanelPresenter.Bind();
+            _equipmentPanelPresenter.PanelInvalidated += RefreshEquipmentPanel;
+            RefreshEquipmentPanel();
             _quickSlotBarPresenter.Bind();
             _errorFeedbackPresenter.Bind();
         }
@@ -233,6 +265,23 @@ namespace Game.Inventory.UI
             inventoryScreenView.Close();
             itemDetailsView.Render(ItemDetailsViewModel.Empty);
             ModeController.ExitInventoryMode();
+        }
+
+        private void RefreshEquipmentPanel()
+        {
+            var slotDataList = _equipmentPanelPresenter.BuildDisplayList();
+
+            foreach (var data in slotDataList)
+            {
+                foreach (var view in equipmentSlotViews)
+                {
+                    if (view.SlotId == data.slotId)
+                    {
+                        view.Bind(data);
+                        break;
+                    }
+                }
+            }
         }
 
         [ContextMenu("Debug: Add Test Items")]

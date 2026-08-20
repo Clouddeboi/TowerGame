@@ -33,6 +33,8 @@ namespace Game.Inventory.UI.Entries
 
         private DragAndDrop.PointerDragCoordinator _dragCoordinator;
 
+        private System.Action<string, Vector2> _onRightClicked;
+
         public void SetSelectionHandler(System.Action<string> onEntrySelected)
         {
             _onEntrySelected = onEntrySelected;
@@ -82,6 +84,7 @@ namespace Game.Inventory.UI.Entries
 
                 entry.HoverStarted += OnEntryHoverStarted;
                 entry.HoverEnded += OnEntryHoverEnded;
+                entry.RightClicked += OnEntryRightClicked;
 
                 _pool.Add(entry);
                 _dragCoordinator?.Attach(entry);
@@ -147,6 +150,7 @@ namespace Game.Inventory.UI.Entries
                     entry.Selected -= OnEntrySelected;
                     entry.HoverStarted -= OnEntryHoverStarted;
                     entry.HoverEnded -= OnEntryHoverEnded;
+                    entry.RightClicked -= OnEntryRightClicked;
                     _dragCoordinator?.Detach(entry);
                 }
             }
@@ -172,6 +176,16 @@ namespace Game.Inventory.UI.Entries
         public void SetDragCoordinator(DragAndDrop.PointerDragCoordinator coordinator)
         {
             _dragCoordinator = coordinator;
+        }
+
+        public void SetContextMenuHandler(System.Action<string, Vector2> onRightClicked)
+        {
+            _onRightClicked = onRightClicked;
+        }
+
+        private void OnEntryRightClicked(string instanceId, Vector2 screenPosition)
+        {
+            _onRightClicked?.Invoke(instanceId, screenPosition);
         }
     }
 }

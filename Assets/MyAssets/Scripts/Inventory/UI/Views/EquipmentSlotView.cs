@@ -16,7 +16,10 @@ namespace Game.Inventory.UI.Views
         [SerializeField]
         private Button unequipButton;
 
-        private string _slotId;
+        [SerializeField]
+        private string slotId; 
+
+        public string SlotId => slotId;
 
         public event System.Action<string> UnequipRequested;
 
@@ -38,8 +41,6 @@ namespace Game.Inventory.UI.Views
 
         public void Bind(EquipmentSlotDisplayData data)
         {
-            _slotId = data.slotId;
-
             if (data.isOccupied)
             {
                 if (iconImage != null)
@@ -76,20 +77,16 @@ namespace Game.Inventory.UI.Views
                     unequipButton.gameObject.SetActive(false);
                 }
             }
-            
-            SetSlotId(data.slotId);
         }
 
         private void OnUnequipClicked()
         {
-            UnequipRequested?.Invoke(_slotId);
+            //UnequipRequested?.Invoke(_slotId);
         }
 
-        public string SlotId { get; private set; }
-
-        public void SetSlotId(string slotId)
+        public void SetSlotId(string newSlotId)
         {
-            SlotId = slotId;
+            slotId = newSlotId;
         }
     }
 }

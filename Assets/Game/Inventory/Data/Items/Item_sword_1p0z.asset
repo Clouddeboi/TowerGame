@@ -87,7 +87,7 @@ MonoBehaviour:
     canBeRemoved: 1
     hiddenBeforeDiscovery: 0
     allowDuplicates: 0
-  hasWeaponData: 0
+  hasWeaponData: 1
   hasArmorData: 0
   hasConsumableData: 0
   hasQuestItemData: 0

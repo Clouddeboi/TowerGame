@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c6d8d552a359374cacbe1f0fc422ada, type: 3}
   m_Name: Necklace
   m_EditorClassIdentifier: Game.Inventory.Runtime::Game.Inventory.Equipment.EquipmentSlotDefinition
-  slotId: 
+  slotId: Necklace
   displayNameKey: Necklace
   emptySlotIcon: {fileID: 0}
   alsoOccupiesSlots: []

@@ -8,7 +8,7 @@ namespace Game.Inventory.UI.Entries
 {
     //renders a single ItemDisplayData, purely presentational, forwards clicks as an
     //event with the bound instanceId, holds no inventory logic and no service references
-    public class InventoryEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class InventoryEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
         [SerializeField]
         private Image iconImage;
@@ -52,6 +52,8 @@ namespace Game.Inventory.UI.Entries
 
         private Sprite _boundIcon;
         public string BoundInstanceId => _boundInstanceId;
+
+        public event System.Action<string, Vector2> RightClicked;
 
         private void Awake()
         {
@@ -161,6 +163,14 @@ namespace Game.Inventory.UI.Entries
             //treat it as a scroll gesture, this is the standard uGUI pattern for making
             //a child inside a ScrollRect independently draggable
             eventData.pointerDrag = gameObject;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Right && !string.IsNullOrEmpty(_boundInstanceId))
+            {
+                RightClicked?.Invoke(_boundInstanceId, eventData.position);
+            }
         }
     }
 }

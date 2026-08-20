@@ -79,12 +79,16 @@ namespace Game.Inventory.UI.DragAndDrop
                 if (equipmentSlot != null)
                 {
                     EquipmentSlotDefinition resolvedSlot = FindSlotById(equipmentSlot.SlotId);
-
+                    Debug.Log($"Equipment slot hit, SlotId={equipmentSlot.SlotId}, resolvedSlot={(resolvedSlot != null ? resolvedSlot.name : "NULL")}");
+                    
                     if (resolvedSlot != null)
                     {
                         DragDropResult result = _dragDropController.DropOntoEquipmentSlot(payload, resolvedSlot);
                         ReportIfFailed(result);
                     }
+
+                    Debug.Log($"Drag ended, raycast hit {results.Count} objects");
+                    foreach (var r in results) Debug.Log($"  - {r.gameObject.name}");
 
                     return;
                 }
@@ -111,6 +115,8 @@ namespace Game.Inventory.UI.DragAndDrop
 
         private void ReportIfFailed(DragDropResult result)
         {
+            Debug.Log($"Drop result: succeeded={result.succeeded}, message={result.userFacingMessageKey}");
+
             if (!result.succeeded)
             {
                 _errorCallback?.Invoke(result.userFacingMessageKey);

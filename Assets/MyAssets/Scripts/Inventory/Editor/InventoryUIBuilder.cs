@@ -240,7 +240,12 @@ namespace Game.Inventory.Editor
 
             var root = new GameObject("ContextMenuActionButton", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
             SetSize(root, new Vector2(220f, 36f));
+            var rootVlg = root.GetComponent<VerticalLayoutGroup>();
+            rootVlg.childControlWidth = true;
+            rootVlg.childControlHeight = true;
+            rootVlg.childForceExpandWidth = true;
             root.GetComponent<LayoutElement>().preferredHeight = 36f;
+            root.GetComponent<LayoutElement>().preferredWidth = 200f;
 
             GameObject buttonGo = CreateChild(root.transform, "ActionButton", typeof(RectTransform), typeof(Image), typeof(Button));
             SetStretch(buttonGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -442,20 +447,24 @@ namespace Game.Inventory.Editor
             foreach (EquipmentSlotDefinition slotDef in slotDefs)
             {
                 string childName = "EquipmentSlot_" + (string.IsNullOrEmpty(slotDef.SlotId) ? slotDef.name : slotDef.SlotId);
-                EquipmentSlotView view = BuildEquipmentSlotInstance(panel.transform, childName);
+                EquipmentSlotView view = BuildEquipmentSlotInstance(panel.transform, childName, slotDef);
                 views.Add(view);
             }
 
             return panel;
         }
 
-        private static EquipmentSlotView BuildEquipmentSlotInstance(Transform parent, string childName)
+        private static EquipmentSlotView BuildEquipmentSlotInstance(Transform parent, string childName, EquipmentSlotDefinition slotDef)
         {
             GameObject existing = FindChildByName(parent, childName);
             if (existing != null)
             {
                 EquipmentSlotView existingView = existing.GetComponent<EquipmentSlotView>();
-                if (existingView != null) return existingView;
+                if (existingView != null)
+                {
+                    AssignField(existingView, "slotId", slotDef.SlotId);
+                    return existingView;
+                }
             }
 
             GameObject go = existing != null ? existing : new GameObject(childName, typeof(RectTransform), typeof(Image));
@@ -485,7 +494,8 @@ namespace Game.Inventory.Editor
             AssignField(view, "iconImage", icon);
             AssignField(view, "emptySlotLabel", emptyLabel);
             AssignField(view, "unequipButton", unequipButtonGo.GetComponent<Button>());
-
+            AssignField(view, "slotId", slotDef.SlotId);
+            Debug.Log($"Built equipment slot '{childName}' with SlotId='{view.SlotId}' (source slotDef.SlotId='{slotDef.SlotId}')");
             return view;
         }
 
@@ -567,18 +577,36 @@ namespace Game.Inventory.Editor
 
         private static GameObject BuildContextMenu(Transform parent, ContextMenuActionButtonView actionButtonPrefab, out ItemContextMenuView view)
         {
-            GameObject go = FindOrCreateChild(parent, "ItemContextMenu", typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-            SetSize(go, new Vector2(240f, 40f));
+            GameObject go = FindOrCreateChild(parent, "ItemContextMenu", typeof(Image));
+            SetSize(go, new Vector2(240f, 300f));
+
+            var rootRt = go.GetComponent<RectTransform>();
+            rootRt.pivot = new Vector2(0f, 1f);
+
             go.GetComponent<Image>().color = new Color(0.08f, 0.08f, 0.08f, 0.95f);
-            var fitter = go.GetComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             GameObject actionParent = FindOrCreateChild(go.transform, "ActionButtonParent", typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+
+            var actionParentRt = actionParent.GetComponent<RectTransform>();
+            actionParentRt.anchorMin = new Vector2(0f, 1f);
+            actionParentRt.anchorMax = new Vector2(1f, 1f);
+            actionParentRt.pivot = new Vector2(0.5f, 1f);
+            actionParentRt.anchoredPosition = Vector2.zero;
+            actionParentRt.offsetMin = new Vector2(4f, actionParentRt.offsetMin.y);
+            actionParentRt.offsetMax = new Vector2(-4f, actionParentRt.offsetMax.y);
+
             var vlg = actionParent.GetComponent<VerticalLayoutGroup>();
             vlg.spacing = 2f;
+            vlg.padding = new RectOffset(4, 4, 4, 4);
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.childControlWidth = true;
             vlg.childControlHeight = true;
             vlg.childForceExpandWidth = true;
-            actionParent.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            vlg.childForceExpandHeight = false;
+
+            var fitter = actionParent.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
             view = go.GetComponent<ItemContextMenuView>();
             if (view == null) view = go.AddComponent<ItemContextMenuView>();
@@ -1038,6 +1066,9 @@ namespace Game.Inventory.Editor
                     break;
                 case Object unityObj:
                     prop.objectReferenceValue = unityObj;
+                    break;
+                case string s:
+                    prop.stringValue = s;
                     break;
                 case float f:
                     prop.floatValue = f;
