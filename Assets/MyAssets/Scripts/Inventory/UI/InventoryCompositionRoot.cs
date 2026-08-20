@@ -130,7 +130,7 @@ namespace Game.Inventory.UI
 
             _contextMenuPresenter = new ItemContextMenuPresenter(
                 PlayerInventoryService, EquipmentService, new EquipmentValidationService(), Loadout,
-                QuickSlotService, QuickSlots, ItemUseService, itemDatabase);
+                QuickSlotService, QuickSlots, ItemUseService, itemDatabase, equipmentSlots);
 
             _tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, itemDatabase, localization);
             _errorFeedbackPresenter = new ErrorFeedbackPresenter(localization, Events);
@@ -225,7 +225,32 @@ namespace Game.Inventory.UI
             for (int i = 0; i < equipmentSlots.Count && i < equipmentSlotViews.Count; i++)
             {
                 var slot = equipmentSlots[i];
-                equipmentSlotViews[i].UnequipRequested += slotId => EquipmentService.Unequip(slot);
+                var view = equipmentSlotViews[i];
+
+                view.UnequipRequested += slotId =>
+                {
+                    EquipmentService.Unequip(slot);
+                    RefreshEquipmentPanel();
+                };
+
+                view.RightClicked += (slotId, screenPos) =>
+                {
+                    var equippedInstance = Loadout.GetEquipped(slot);
+                    if (equippedInstance == null)
+                    {
+                        return;
+                    }
+
+                    string instanceId = equippedInstance.InstanceId.ToString();
+                    var actions = _contextMenuPresenter.BuildActions(instanceId);
+                    contextMenuView.Show(instanceId, actions);
+
+                    var rt = contextMenuView.GetComponent<RectTransform>();
+                    if (rt != null)
+                    {
+                        rt.position = screenPos;
+                    }
+                };
             }
 
             for (int i = 0; i < quickSlotViews.Count; i++)

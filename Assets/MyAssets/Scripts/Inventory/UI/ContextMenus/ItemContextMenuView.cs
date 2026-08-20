@@ -19,10 +19,32 @@ namespace Game.Inventory.UI.ContextMenus
         [SerializeField]
         private ContextMenuActionButtonView actionButtonPrefab;
 
+        [SerializeField]
+        private GameObject clickCatcher;
+
+        [SerializeField]
+        private Button clickCatcherButton;
+
         private readonly List<ContextMenuActionButtonView> _spawnedButtons = new List<ContextMenuActionButtonView>();
         private string _boundInstanceId;
 
         public event System.Action<ContextMenuActionKind, string> ActionChosen;
+
+        private void Awake()
+        {
+            if (clickCatcherButton != null)
+            {
+                clickCatcherButton.onClick.AddListener(Hide);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (clickCatcherButton != null)
+            {
+                clickCatcherButton.onClick.RemoveListener(Hide);
+            }
+        }
 
         public void Show(string instanceId, IReadOnlyList<ContextMenuActionData> actions)
         {
@@ -38,9 +60,16 @@ namespace Game.Inventory.UI.ContextMenus
                 _spawnedButtons.Add(button);
             }
 
+            if (clickCatcher != null)
+            {
+                clickCatcher.SetActive(true);
+                clickCatcher.transform.SetAsLastSibling();
+            }
+
             if (rootPanel != null)
             {
                 rootPanel.SetActive(true);
+                rootPanel.transform.SetAsLastSibling();
             }
         }
 
@@ -49,6 +78,11 @@ namespace Game.Inventory.UI.ContextMenus
             if (rootPanel != null)
             {
                 rootPanel.SetActive(false);
+            }
+
+            if (clickCatcher != null)
+            {
+                clickCatcher.SetActive(false);
             }
 
             ClearButtons();

@@ -4,6 +4,8 @@ using Game.Inventory.Config;
 using Game.Inventory.UI.Presenters;
 using NUnit.Framework;
 using UnityEngine;
+using System.Collections.Generic;
+using Game.Inventory.Equipment;
 
 namespace Game.Inventory.Tests
 {
@@ -34,7 +36,8 @@ namespace Game.Inventory.Tests
                 _quickSlotService,
                 _quickSlots,
                 _fixture.itemUseService,
-                _fixture.database);
+                _fixture.database,
+                new List<EquipmentSlotDefinition> { _fixture.mainHandSlot, _fixture.headSlot });
         }
 
         [TearDown]

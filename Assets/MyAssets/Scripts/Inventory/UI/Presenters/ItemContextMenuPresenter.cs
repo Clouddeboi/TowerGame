@@ -8,6 +8,7 @@ using Game.Inventory.Interfaces;
 using Game.Inventory.Operations;
 using Game.Inventory.QuickSlots;
 using Game.Inventory.Core;
+using Game.Inventory.Definitions.Payloads;
 
 namespace Game.Inventory.UI.Presenters
 {
@@ -26,7 +27,7 @@ namespace Game.Inventory.UI.Presenters
         private readonly QuickSlotCollection _quickSlots;
         private readonly ItemUseService _itemUseService;
         private readonly ItemDatabase _database;
-
+        private readonly IReadOnlyList<EquipmentSlotDefinition> _knownSlots;
         public ItemContextMenuPresenter(
             InventoryService inventoryService,
             EquipmentService equipmentService,
@@ -35,7 +36,8 @@ namespace Game.Inventory.UI.Presenters
             QuickSlotService quickSlotService,
             QuickSlotCollection quickSlots,
             ItemUseService itemUseService,
-            ItemDatabase database)
+            ItemDatabase database,
+            IReadOnlyList<EquipmentSlotDefinition> knownSlots)
         {
             _inventoryService = inventoryService;
             _equipmentService = equipmentService;
@@ -45,6 +47,20 @@ namespace Game.Inventory.UI.Presenters
             _quickSlots = quickSlots;
             _itemUseService = itemUseService;
             _database = database;
+            _knownSlots = knownSlots;
+        }
+
+        private EquipmentSlotDefinition FindKnownSlotById(string slotId)
+        {
+            foreach (EquipmentSlotDefinition slot in _knownSlots)
+            {
+                if (slot.SlotId == slotId)
+                {
+                    return slot;
+                }
+            }
+
+            return null;
         }
 
         public IReadOnlyList<ContextMenuActionData> BuildActions(string instanceId)
@@ -127,14 +143,14 @@ namespace Game.Inventory.UI.Presenters
         //required for Use, since other actions do not need item effect validation ports
         public void Execute(ContextMenuActionKind kind, string instanceId, IItemUsageContext context, float secondsElapsed)
         {
-            InventoryEntry entry = FindEntry(instanceId);
+            ItemInstance instance = FindInstanceAnywhere(instanceId);
 
-            if (entry == null)
+            if (instance == null)
             {
                 return;
             }
 
-            ItemInstanceId typedInstanceId = entry.Instance.InstanceId;
+            ItemInstanceId typedInstanceId = instance.InstanceId;
 
             switch (kind)
             {
@@ -143,20 +159,19 @@ namespace Game.Inventory.UI.Presenters
                     break;
 
                 case ContextMenuActionKind.Equip:
-                    ExecuteEquip(entry, typedInstanceId);
+                    ExecuteEquip(instance, typedInstanceId);
                     break;
 
                 case ContextMenuActionKind.Unequip:
-                    ExecuteUnequip(entry);
+                    ExecuteUnequip(instance);
                     break;
 
                 case ContextMenuActionKind.AssignToQuickSlot:
-                    //actual slot index selection happens in the view/drag-and-drop flow
-                    AssignToFirstEmptySlot(entry.Instance.DefinitionId);
+                    AssignToFirstEmptySlot(instance.DefinitionId);
                     break;
 
                 case ContextMenuActionKind.RemoveFromQuickSlot:
-                    RemoveFromAllSlots(entry.Instance.DefinitionId);
+                    RemoveFromAllSlots(instance.DefinitionId);
                     break;
 
                 case ContextMenuActionKind.Drop:
@@ -164,50 +179,82 @@ namespace Game.Inventory.UI.Presenters
                     break;
 
                 case ContextMenuActionKind.Favorite:
-                    entry.SetFavorite(true);
+                    SetFavoriteIfInInventory(instanceId, true);
                     break;
 
                 case ContextMenuActionKind.Unfavorite:
-                    entry.SetFavorite(false);
+                    SetFavoriteIfInInventory(instanceId, false);
                     break;
 
                 case ContextMenuActionKind.Destroy:
                     _inventoryService.RemoveInstance(typedInstanceId);
                     break;
 
-                //SplitStack, Inspect, Compare, Transfer require additional UI-provided
-                //parameters (split quantity, destination container) and are triggered
-                //through their own dedicated flows rather than this generic dispatch,
                 default:
                     break;
             }
         }
 
-        private void ExecuteEquip(InventoryEntry entry, ItemInstanceId instanceId)
+        private void SetFavoriteIfInInventory(string instanceId, bool favorite)
         {
-            if (!_database.TryResolve(entry.Instance.DefinitionId, out ItemDefinition definition))
+            InventoryEntry entry = FindEntry(instanceId);
+            entry?.SetFavorite(favorite);
+        }
+        private void ExecuteEquip(ItemInstance instance, ItemInstanceId instanceId)
+        {
+            if (!_database.TryResolve(instance.DefinitionId, out ItemDefinition definition))
             {
                 return;
             }
 
-            //default slot resolution for a quick "equip" click, weapons default to
-            //main hand unless two-handed, armor resolves through its defined slot
             if (definition.HasArmorData && definition.ArmorPayload.EquipmentSlot != null)
             {
                 _equipmentService.Equip(instanceId, definition.ArmorPayload.EquipmentSlot);
+                return;
+            }
+
+            if (definition.HasWeaponData)
+            {
+                EquipmentSlotDefinition targetSlot = ResolveWeaponSlot(definition.WeaponPayload.HandRequirement);
+
+                if (targetSlot != null)
+                {
+                    _equipmentService.Equip(instanceId, targetSlot);
+                }
             }
         }
 
-        private void ExecuteUnequip(InventoryEntry entry)
+        private void ExecuteUnequip(ItemInstance instance)
         {
             foreach (var kvp in _loadout.EquippedBySlot)
             {
-                if (kvp.Value == entry.Instance)
+                if (kvp.Value == instance)
                 {
                     _equipmentService.Unequip(kvp.Key);
                     return;
                 }
             }
+        }
+
+        //resolves a sensible default slot for a weapon equipped via the context menu,
+        //two-handed weapons go to the two-handed slot, one-handed weapons default to
+        //main hand unless it is already occupied, in which case off hand is used instead
+        private EquipmentSlotDefinition ResolveWeaponSlot(HandRequirement handRequirement)
+        {
+            if (handRequirement == HandRequirement.TwoHanded)
+            {
+                return FindKnownSlotById("TwoHanded");
+            }
+
+            EquipmentSlotDefinition mainHand = FindKnownSlotById("MainHand");
+            EquipmentSlotDefinition offHand = FindKnownSlotById("OffHand");
+
+            if (mainHand != null && _loadout.GetEquipped(mainHand) == null)
+            {
+                return mainHand;
+            }
+
+            return offHand;
         }
 
         private void AssignToFirstEmptySlot(ItemId definitionId)

@@ -1,11 +1,12 @@
 using Game.Inventory.UI.Presenters;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Game.Inventory.UI.Views
 {
-    public class EquipmentSlotView : MonoBehaviour
+    public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField]
         private Image iconImage;
@@ -22,6 +23,7 @@ namespace Game.Inventory.UI.Views
         public string SlotId => slotId;
 
         public event System.Action<string> UnequipRequested;
+        public event System.Action<string, Vector2> RightClicked;
 
         private void Awake()
         {
@@ -81,7 +83,15 @@ namespace Game.Inventory.UI.Views
 
         private void OnUnequipClicked()
         {
-            //UnequipRequested?.Invoke(_slotId);
+            UnequipRequested?.Invoke(slotId);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Right)
+            {
+                RightClicked?.Invoke(SlotId, eventData.position);
+            }
         }
 
         public void SetSlotId(string newSlotId)

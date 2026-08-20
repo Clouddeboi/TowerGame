@@ -577,6 +577,11 @@ namespace Game.Inventory.Editor
 
         private static GameObject BuildContextMenu(Transform parent, ContextMenuActionButtonView actionButtonPrefab, out ItemContextMenuView view)
         {
+            GameObject catcher = FindOrCreateChild(parent, "ContextMenuClickCatcher", typeof(Image), typeof(Button));
+            SetStretch(catcher, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            catcher.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
+            catcher.SetActive(false);
+
             GameObject go = FindOrCreateChild(parent, "ItemContextMenu", typeof(Image));
             SetSize(go, new Vector2(240f, 300f));
 
@@ -614,6 +619,8 @@ namespace Game.Inventory.Editor
             AssignField(view, "rootPanel", go);
             AssignField(view, "actionButtonParent", actionParent.transform);
             AssignField(view, "actionButtonPrefab", actionButtonPrefab);
+            AssignField(view, "clickCatcher", catcher);
+            AssignField(view, "clickCatcherButton", catcher.GetComponent<Button>());
 
             go.SetActive(false);
             return go;
