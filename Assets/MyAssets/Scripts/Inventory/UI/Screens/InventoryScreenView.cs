@@ -108,6 +108,11 @@ namespace Game.Inventory.UI.Screens
             }
         }
 
+        public void Refresh()
+        {
+            RefreshDisplay();
+        }
+
         private void OnEntrySelected(string instanceId)
         {
             EntrySelected?.Invoke(instanceId);

@@ -34,11 +34,7 @@ namespace Game.Inventory.UI
 
             ConfirmationRequest request = _pending.Dequeue();
             request.onConfirm?.Invoke();
-
-            if (_pending.Count > 0)
-            {
-                RequestAvailable?.Invoke();
-            }
+            RequestAvailable?.Invoke();
         }
 
         public void Cancel()
@@ -50,11 +46,7 @@ namespace Game.Inventory.UI
 
             ConfirmationRequest request = _pending.Dequeue();
             request.onCancel?.Invoke();
-
-            if (_pending.Count > 0)
-            {
-                RequestAvailable?.Invoke();
-            }
+            RequestAvailable?.Invoke();
         }
     }
 }

@@ -188,6 +188,12 @@ namespace Game.Inventory.UI
 
             contextMenuView.ActionChosen += (kind, instanceId) =>
             {
+                if (kind == ContextMenuActionKind.Inspect)
+                {
+                    OnEntrySelected(instanceId);
+                    return;
+                }
+                
                 bool isDestructive = kind == ContextMenuActionKind.Destroy || kind == ContextMenuActionKind.Drop;
 
                 if (isDestructive)
@@ -195,12 +201,18 @@ namespace Game.Inventory.UI
                     ConfirmationService.Request(
                         "confirm.title",
                         kind == ContextMenuActionKind.Destroy ? "confirm.destroy_message" : "confirm.drop_message",
-                        () => _contextMenuPresenter.Execute(kind, instanceId, null, Time.time),
+                        () =>
+                        {
+                            _contextMenuPresenter.Execute(kind, instanceId, null, Time.time);
+                            inventoryScreenView.SendMessage("RefreshDisplay", SendMessageOptions.DontRequireReceiver);
+                        },
                         null);
                 }
                 else
                 {
                     _contextMenuPresenter.Execute(kind, instanceId, null, Time.time);
+                    inventoryScreenView.SendMessage("RefreshDisplay", SendMessageOptions.DontRequireReceiver);
+                    RefreshEquipmentPanel();
                 }
             };
 
