@@ -46,6 +46,10 @@ namespace Game.Inventory.UI.Entries
 
             content.sizeDelta = new Vector2(content.sizeDelta.x, _currentData.Count * rowHeight);
 
+            //ensure content starts scrolled to the top when freshly populated, so row 0
+            //is not partially clipped above the viewport due to a stale scroll position
+            content.anchoredPosition = new Vector2(content.anchoredPosition.x, 0f);
+
             EnsurePoolSize();
             RefreshVisibleRange();
         }

@@ -166,8 +166,10 @@ namespace Game.Inventory.Editor
             InventoryEntryView existing = LoadPrefabComponent<InventoryEntryView>(path);
             if (existing != null) return existing;
 
-            var root = new GameObject("InventoryEntry", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HorizontalLayoutGroup));
-            SetSize(root, new Vector2(320f, 56f));
+            var root = new GameObject("InventoryEntry", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            SetStretch(root, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+            root.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, 56f);
+            root.GetComponent<LayoutElement>().preferredHeight = 56f;
             root.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.03f);
 
             var hlg = root.GetComponent<HorizontalLayoutGroup>();
@@ -178,33 +180,43 @@ namespace Game.Inventory.Editor
             hlg.childControlWidth = false;
 
             Image icon = CreateImageChild(root.transform, "IconImage", new Vector2(40f, 40f));
+            LayoutElement iconLayoutElement = icon.gameObject.AddComponent<LayoutElement>();
+            iconLayoutElement.preferredWidth = 40f;
+            iconLayoutElement.preferredHeight = 40f;
 
-            GameObject rarityBorder = CreateChild(root.transform, "RarityBorderImage", typeof(RectTransform), typeof(Image));
-            SetSize(rarityBorder, new Vector2(44f, 44f));
+            GameObject rarityBorder = CreateChild(icon.transform, "RarityBorderImage", typeof(RectTransform), typeof(Image));
+            var rarityBorderRt = rarityBorder.GetComponent<RectTransform>();
+            rarityBorderRt.anchorMin = new Vector2(0.5f, 0.5f);
+            rarityBorderRt.anchorMax = new Vector2(0.5f, 0.5f);
+            rarityBorderRt.sizeDelta = new Vector2(46f, 46f);
+            rarityBorderRt.anchoredPosition = Vector2.zero;
             var borderImage = rarityBorder.GetComponent<Image>();
             borderImage.color = Color.clear;
             borderImage.raycastTarget = false;
 
-            GameObject textColumn = CreateChild(root.transform, "TextColumn", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            GameObject textColumn = CreateChild(root.transform, "TextColumn", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
             textColumn.GetComponent<LayoutElement>().flexibleWidth = 1f;
-            var vlg = textColumn.GetComponent<VerticalLayoutGroup>();
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = false;
-            vlg.spacing = 2f;
+
+            var textColumnHlg = textColumn.GetComponent<HorizontalLayoutGroup>();
+            textColumnHlg.spacing = 75f;
+            textColumnHlg.childAlignment = TextAnchor.MiddleLeft;
+            textColumnHlg.childControlWidth = false;
+            textColumnHlg.childControlHeight = false;
+            textColumnHlg.childForceExpandWidth = false;
+            textColumnHlg.childForceExpandHeight = false;
 
             TMP_Text nameText = CreateTmpChild(textColumn.transform, "NameText", 14f, TextAlignmentOptions.MidlineLeft);
+            SetPreferredWidth(nameText.gameObject, 150f);
 
-            GameObject subRow = CreateChild(textColumn.transform, "SubRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            var subHlg = subRow.GetComponent<HorizontalLayoutGroup>();
-            subHlg.spacing = 6f;
-            subHlg.childControlWidth = false;
-            TMP_Text quantityText = CreateTmpChild(subRow.transform, "QuantityText", 12f, TextAlignmentOptions.MidlineLeft);
+            TMP_Text quantityText = CreateTmpChild(textColumn.transform, "QuantityText", 12f, TextAlignmentOptions.MidlineLeft);
             quantityText.color = new Color(0.75f, 0.75f, 0.75f);
-            TMP_Text rarityLabel = CreateTmpChild(subRow.transform, "RarityAccessibilityLabelText", 10f, TextAlignmentOptions.MidlineLeft);
+            SetPreferredWidth(quantityText.gameObject, 55f);
+
+            TMP_Text rarityLabel = CreateTmpChild(textColumn.transform, "RarityAccessibilityLabelText", 10f, TextAlignmentOptions.MidlineLeft);
             rarityLabel.fontStyle = FontStyles.Bold;
 
-            GameObject spacer = CreateChild(root.transform, "Spacer", typeof(RectTransform), typeof(LayoutElement));
-            spacer.GetComponent<LayoutElement>().flexibleWidth = 1f;
+            // GameObject spacer = CreateChild(root.transform, "Spacer", typeof(RectTransform), typeof(LayoutElement));
+            // spacer.GetComponent<LayoutElement>().flexibleWidth = 1f;
 
             GameObject indicatorRow = CreateChild(root.transform, "Indicators", typeof(RectTransform), typeof(HorizontalLayoutGroup));
             var indicatorHlg = indicatorRow.GetComponent<HorizontalLayoutGroup>();
@@ -272,18 +284,18 @@ namespace Game.Inventory.Editor
             if (existing != null) return existing;
 
             var root = new GameObject("ItemDetailStatRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
-            root.GetComponent<LayoutElement>().preferredHeight = 24f;
-            var hlg = root.GetComponent<HorizontalLayoutGroup>();
-            hlg.spacing = 8f;
-            hlg.childControlWidth = false;
+            var rootLayoutElement = root.GetComponent<LayoutElement>();
+            rootLayoutElement.minHeight = 40f;
+            rootLayoutElement.preferredHeight = 40f;
+            rootLayoutElement.flexibleHeight = 0f;
 
             TMP_Text labelText = CreateTmpChild(root.transform, "LabelText", 12f, TextAlignmentOptions.MidlineLeft);
-            SetPreferredWidth(labelText.gameObject, 130f);
+            SetPreferredWidth(labelText.gameObject, 40f);
             TMP_Text valueText = CreateTmpChild(root.transform, "ValueText", 12f, TextAlignmentOptions.MidlineRight);
-            SetPreferredWidth(valueText.gameObject, 60f);
+            SetPreferredWidth(valueText.gameObject, 40f);
             TMP_Text deltaText = CreateTmpChild(root.transform, "DeltaText", 12f, TextAlignmentOptions.MidlineRight);
             deltaText.fontStyle = FontStyles.Bold;
-            SetPreferredWidth(deltaText.gameObject, 60f);
+            SetPreferredWidth(deltaText.gameObject, 40f);
 
             ItemDetailStatRowView view = root.AddComponent<ItemDetailStatRowView>();
             AssignField(view, "labelText", labelText);
@@ -311,7 +323,7 @@ namespace Game.Inventory.Editor
             var contentRt = contentGo.GetComponent<RectTransform>();
             contentRt.anchorMin = new Vector2(0f, 1f);
             contentRt.anchorMax = new Vector2(1f, 1f);
-            contentRt.pivot = new Vector2(0.5f, 1f);
+            contentRt.pivot = new Vector2(0.5f, 0.95f);
             contentRt.sizeDelta = new Vector2(0f, 0f);
             contentRt.anchoredPosition = Vector2.zero;
 
@@ -384,23 +396,64 @@ namespace Game.Inventory.Editor
             var vlg = panel.GetComponent<VerticalLayoutGroup>();
             vlg.padding = new RectOffset(12, 12, 12, 12);
             vlg.spacing = 6f;
+            vlg.childAlignment = TextAnchor.UpperCenter;
             vlg.childControlHeight = false;
             vlg.childControlWidth = true;
+            vlg.childForceExpandWidth = false;
 
             TMP_Text nameText = CreateTmpChild(panel.transform, "NameText", 20f, TextAlignmentOptions.MidlineLeft);
             nameText.fontStyle = FontStyles.Bold;
+            SetPreferredHeight(nameText.gameObject, 28f);
+            LayoutElement nameLayoutElement = nameText.gameObject.AddComponent<LayoutElement>();
+            nameLayoutElement.flexibleWidth = 1f;
 
-            Image iconPreview = CreateImageChild(panel.transform, "IconPreview", new Vector2(96f, 96f));
+            //square icon, fixed size, self-contained so its child (the durability bar) can
+            //size itself directly off the icon's own RectTransform width
+            GameObject iconPreviewGo = FindOrCreateChild(panel.transform, "IconPreview", typeof(Image), typeof(LayoutElement));
+            SetSize(iconPreviewGo, new Vector2(96f, 96f));
+            iconPreviewGo.GetComponent<LayoutElement>().preferredWidth = 96f;
+            iconPreviewGo.GetComponent<LayoutElement>().preferredHeight = 96f;
+            Image iconPreview = iconPreviewGo.GetComponent<Image>();
+            iconPreview.preserveAspect = true;
+
+            //durability bar is now a child of the icon, positioned directly beneath it,
+            //matching the icon's own width exactly via stretch anchoring on the x axis
+            GameObject durabilityBg = CreateChild(iconPreviewGo.transform, "DurabilityBar", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            var durabilityRt = durabilityBg.GetComponent<RectTransform>();
+            durabilityRt.anchorMin = new Vector2(0f, 0f);
+            durabilityRt.anchorMax = new Vector2(1f, 0f);
+            durabilityRt.pivot = new Vector2(0.5f, 1f);
+            durabilityRt.anchoredPosition = new Vector2(0f, -4f);
+            durabilityRt.sizeDelta = new Vector2(0f, 10f);
+            durabilityBg.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.08f);
+            durabilityBg.GetComponent<LayoutElement>().preferredWidth = 96f;
+
+            GameObject durabilityFillGo = CreateChild(durabilityBg.transform, "Fill", typeof(RectTransform), typeof(Image));
+            SetStretch(durabilityFillGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            var durabilityFill = durabilityFillGo.GetComponent<Image>();
+            durabilityFill.type = Image.Type.Filled;
+            durabilityFill.fillMethod = Image.FillMethod.Horizontal;
+            durabilityFill.color = new Color(0.4f, 0.8f, 0.4f);
 
             TMP_Text descriptionText = CreateTmpChild(panel.transform, "DescriptionText", 13f, TextAlignmentOptions.TopLeft);
             descriptionText.enableWordWrapping = true;
-            SetPreferredHeight(descriptionText.gameObject, 80f);
+            SetPreferredHeight(descriptionText.gameObject, 100f);
+            LayoutElement descriptionLayoutElement = descriptionText.gameObject.AddComponent<LayoutElement>();
+            descriptionLayoutElement.flexibleWidth = 1f;
 
             GameObject statRowParent = FindOrCreateChild(panel.transform, "StatRowParent", typeof(VerticalLayoutGroup), typeof(LayoutElement));
-            statRowParent.GetComponent<VerticalLayoutGroup>().spacing = 2f;
-            statRowParent.GetComponent<LayoutElement>().flexibleHeight = 1f;
+            var statRowVlg = statRowParent.GetComponent<VerticalLayoutGroup>();
+            statRowVlg.spacing = 2f;
+            statRowVlg.childControlHeight = true;
+            statRowVlg.childForceExpandHeight = false;
+            var statRowParentLayoutElement = statRowParent.GetComponent<LayoutElement>();
+            statRowParentLayoutElement.flexibleHeight = 1f;
+            statRowParentLayoutElement.flexibleWidth = 1f;
 
-            GameObject requirementsWarning = FindOrCreateChild(panel.transform, "RequirementsNotMetWarning", typeof(Image));
+            GameObject requirementsWarning = FindOrCreateChild(panel.transform, "RequirementsNotMetWarning", typeof(Image), typeof(LayoutElement));
+            requirementsWarning.GetComponent<Image>().color = new Color(0.5f, 0.1f, 0.1f, 0.4f);
+            requirementsWarning.GetComponent<LayoutElement>().flexibleWidth = 1f;
+            requirementsWarning.GetComponent<LayoutElement>().preferredHeight = 24f;
             requirementsWarning.GetComponent<Image>().color = new Color(0.5f, 0.1f, 0.1f, 0.4f);
             TMP_Text warningText = CreateTmpChild(requirementsWarning.transform, "Text", 12f, TextAlignmentOptions.Center);
             warningText.text = "Requirements not met";
@@ -408,29 +461,20 @@ namespace Game.Inventory.Editor
             SetPreferredHeight(requirementsWarning, 24f);
             requirementsWarning.SetActive(false);
 
-            GameObject durabilityBg = FindOrCreateChild(panel.transform, "DurabilityBar", typeof(Image));
-            durabilityBg.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.08f);
-            SetPreferredHeight(durabilityBg, 10f);
-            GameObject durabilityFillGo = FindOrCreateChild(durabilityBg.transform, "Fill", typeof(Image));
-            SetStretch(durabilityFillGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            var durabilityFill = durabilityFillGo.GetComponent<Image>();
-            durabilityFill.type = Image.Type.Filled;
-            durabilityFill.fillMethod = Image.FillMethod.Horizontal;
-            durabilityFill.color = new Color(0.4f, 0.8f, 0.4f);
-
             detailsView = panel.GetComponent<ItemDetailsView>();
             if (detailsView == null) detailsView = panel.AddComponent<ItemDetailsView>();
 
             AssignField(detailsView, "rootPanel", panel);
             AssignField(detailsView, "nameText", nameText);
-            AssignField(detailsView, "descriptionText", descriptionText);
             AssignField(detailsView, "iconPreviewImage", iconPreview);
+            AssignField(detailsView, "descriptionText", descriptionText);
             AssignField(detailsView, "statRowParent", statRowParent.transform);
             AssignField(detailsView, "statRowPrefab", statRowPrefab);
             AssignField(detailsView, "requirementsNotMetWarning", requirementsWarning);
             AssignField(detailsView, "durabilityBar", durabilityBg);
             AssignField(detailsView, "durabilityFillImage", durabilityFill);
 
+            panel.SetActive(false);
             return panel;
         }
 

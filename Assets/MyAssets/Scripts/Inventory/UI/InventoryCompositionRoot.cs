@@ -282,6 +282,8 @@ namespace Game.Inventory.UI
             _equipmentPanelPresenter.PanelInvalidated += RefreshEquipmentPanel;
             RefreshEquipmentPanel();
             _quickSlotBarPresenter.Bind();
+            _quickSlotBarPresenter.BarInvalidated += RefreshQuickSlotBar;
+            RefreshQuickSlotBar();
             _errorFeedbackPresenter.Bind();
         }
 
@@ -318,6 +320,16 @@ namespace Game.Inventory.UI
                         break;
                     }
                 }
+            }
+        }
+
+        private void RefreshQuickSlotBar()
+        {
+            var slotDataList = _quickSlotBarPresenter.BuildDisplayList(Time.time);
+
+            for (int i = 0; i < slotDataList.Count && i < quickSlotViews.Count; i++)
+            {
+                quickSlotViews[i].Bind(slotDataList[i], (i + 1).ToString());
             }
         }
 
