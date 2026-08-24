@@ -490,6 +490,14 @@ namespace Game.Inventory.Editor
 
             foreach (EquipmentSlotDefinition slotDef in slotDefs)
             {
+                //the TwoHanded slot has no visible tile of its own, a two-handed weapon is
+                //equipped by dropping it on MainHand or OffHand, which redirects to TwoHanded
+                //internally, see PointerDragCoordinator and ItemContextMenuPresenter
+                if (slotDef.SlotId == "TwoHanded")
+                {
+                    continue;
+                }
+
                 string childName = "EquipmentSlot_" + (string.IsNullOrEmpty(slotDef.SlotId) ? slotDef.name : slotDef.SlotId);
                 EquipmentSlotView view = BuildEquipmentSlotInstance(panel.transform, childName, slotDef);
                 views.Add(view);
@@ -538,6 +546,7 @@ namespace Game.Inventory.Editor
             AssignField(view, "iconImage", icon);
             AssignField(view, "emptySlotLabel", emptyLabel);
             AssignField(view, "unequipButton", unequipButtonGo.GetComponent<Button>());
+            AssignField(view, "backgroundImage", go.GetComponent<Image>());
             AssignField(view, "slotId", slotDef.SlotId);
             Debug.Log($"Built equipment slot '{childName}' with SlotId='{view.SlotId}' (source slotDef.SlotId='{slotDef.SlotId}')");
             return view;

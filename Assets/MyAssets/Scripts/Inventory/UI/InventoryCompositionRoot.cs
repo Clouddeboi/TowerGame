@@ -114,6 +114,8 @@ namespace Game.Inventory.UI
             var displayDataBuilder = new ItemDisplayDataBuilder(itemDatabase, localization);
             var inventoryView = new InventoryView(PlayerInventoryService.Container, itemDatabase);
 
+            var displayedEquipmentSlots = equipmentSlots.FindAll(s => s.SlotId != "TwoHanded");
+
             _inventoryScreenPresenter = new InventoryScreenPresenter(
                 PlayerInventoryService, inventoryView, itemDatabase, displayDataBuilder,
                 Loadout, QuickSlots, Events);
@@ -123,7 +125,7 @@ namespace Game.Inventory.UI
                 localization, null, Events);
 
             _equipmentPanelPresenter = new EquipmentPanelPresenter(
-                Loadout, EquipmentService, displayDataBuilder, equipmentSlots, Events);
+                Loadout, EquipmentService, displayDataBuilder, displayedEquipmentSlots, equipmentSlots, Events);
 
             _quickSlotBarPresenter = new QuickSlotBarPresenter(
                 QuickSlots, QuickSlotService, ItemUseService, itemDatabase, displayDataBuilder, Events);
@@ -167,10 +169,12 @@ namespace Game.Inventory.UI
             }
 
             var dragCoordinator = new DragAndDrop.PointerDragCoordinator(
-            _dragDropController,
-            dragGhostView,
-            equipmentSlots,
-            message => errorToastView.ShowMessage(message ?? "Action failed."));
+                _dragDropController,
+                dragGhostView,
+                equipmentSlots,
+                PlayerInventoryService,
+                itemDatabase,
+                message => errorToastView.ShowMessage(message ?? "Action failed."));
 
             entryList?.SetDragCoordinator(dragCoordinator);
 
@@ -241,13 +245,15 @@ namespace Game.Inventory.UI
 
                 view.UnequipRequested += slotId =>
                 {
-                    EquipmentService.Unequip(slot);
+                    EquipmentSlotDefinition actualSlot = ResolveActualUnequipSlot(slot);
+                    EquipmentService.Unequip(actualSlot);
                     RefreshEquipmentPanel();
                 };
 
                 view.RightClicked += (slotId, screenPos) =>
                 {
-                    var equippedInstance = Loadout.GetEquipped(slot);
+                    EquipmentSlotDefinition actualSlot = ResolveActualUnequipSlot(slot);
+                    var equippedInstance = Loadout.GetEquipped(actualSlot);
                     if (equippedInstance == null)
                     {
                         return;
@@ -331,6 +337,24 @@ namespace Game.Inventory.UI
             {
                 quickSlotViews[i].Bind(slotDataList[i], (i + 1).ToString());
             }
+        }
+
+        //MainHand's tile displays a two-handed weapon when one is equipped, but the item
+        //actually lives in the TwoHanded slot. unequip/right-click on that tile needs to
+        //target TwoHanded, not MainHand, which holds nothing in that state
+        private EquipmentSlotDefinition ResolveActualUnequipSlot(EquipmentSlotDefinition visualSlot)
+        {
+            if (visualSlot.SlotId == "MainHand")
+            {
+                EquipmentSlotDefinition twoHandedSlot = equipmentSlots.Find(s => s.SlotId == "TwoHanded");
+
+                if (twoHandedSlot != null && Loadout.GetEquipped(twoHandedSlot) != null)
+                {
+                    return twoHandedSlot;
+                }
+            }
+
+            return visualSlot;
         }
 
         [ContextMenu("Debug: Add Test Items")]

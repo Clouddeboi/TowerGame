@@ -3,8 +3,12 @@ using Game.Inventory.Core;
 using Game.Inventory.Equipment;
 using Game.Inventory.UI.Entries;
 using Game.Inventory.UI.Views;
+using Game.Inventory.Definitions;
+using Game.Inventory.Definitions.Payloads;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Game.Inventory.Operations;
+using Game.Inventory.Containers;
 
 namespace Game.Inventory.UI.DragAndDrop
 {
@@ -18,17 +22,24 @@ namespace Game.Inventory.UI.DragAndDrop
         private readonly IReadOnlyList<EquipmentSlotDefinition> _knownSlots;
         private readonly System.Action<string> _errorCallback;
 
+        private readonly InventoryService _inventoryService;
+        private readonly ItemDatabase _database;
+
         private string _draggingInstanceId;
 
         public PointerDragCoordinator(
             DragDropController dragDropController,
             DragGhostView ghostView,
             IReadOnlyList<EquipmentSlotDefinition> knownSlots,
+            InventoryService inventoryService,
+            ItemDatabase database,
             System.Action<string> errorCallback)
         {
             _dragDropController = dragDropController;
             _ghostView = ghostView;
             _knownSlots = knownSlots;
+            _inventoryService = inventoryService;
+            _database = database;
             _errorCallback = errorCallback;
         }
 
@@ -78,17 +89,13 @@ namespace Game.Inventory.UI.DragAndDrop
                 EquipmentSlotView equipmentSlot = hit.gameObject.GetComponentInParent<EquipmentSlotView>();
                 if (equipmentSlot != null)
                 {
-                    EquipmentSlotDefinition resolvedSlot = FindSlotById(equipmentSlot.SlotId);
-                    Debug.Log($"Equipment slot hit, SlotId={equipmentSlot.SlotId}, resolvedSlot={(resolvedSlot != null ? resolvedSlot.name : "NULL")}");
-                    
+                    EquipmentSlotDefinition resolvedSlot = ResolveActualTargetSlot(payload.instanceId, equipmentSlot.SlotId);
+
                     if (resolvedSlot != null)
                     {
                         DragDropResult result = _dragDropController.DropOntoEquipmentSlot(payload, resolvedSlot);
                         ReportIfFailed(result);
                     }
-
-                    Debug.Log($"Drag ended, raycast hit {results.Count} objects");
-                    foreach (var r in results) Debug.Log($"  - {r.gameObject.name}");
 
                     return;
                 }
@@ -130,6 +137,40 @@ namespace Game.Inventory.UI.DragAndDrop
                 if (slot.SlotId == slotId)
                 {
                     return slot;
+                }
+            }
+
+            return null;
+        }
+
+        //if the dragged item is a two-handed weapon and the visual target is MainHand or
+        //OffHand, redirect to the TwoHanded slot instead, the player only ever interacts
+        //with the two visible hand slots, TwoHanded itself has no UI tile
+        private EquipmentSlotDefinition ResolveActualTargetSlot(string draggedInstanceId, string visualTargetSlotId)
+        {
+            bool targetIsHandSlot = visualTargetSlotId == "MainHand" || visualTargetSlotId == "OffHand";
+
+            if (targetIsHandSlot)
+            {
+                InventoryEntry entry = FindDraggedEntry(draggedInstanceId);
+
+                if (entry != null && _database.TryResolve(entry.Instance.DefinitionId, out ItemDefinition definition)
+                    && definition.HasWeaponData && definition.WeaponPayload.HandRequirement == HandRequirement.TwoHanded)
+                {
+                    return FindSlotById("TwoHanded");
+                }
+            }
+
+            return FindSlotById(visualTargetSlotId);
+        }
+
+        private InventoryEntry FindDraggedEntry(string instanceId)
+        {
+            foreach (InventoryEntry entry in _inventoryService.Container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == instanceId)
+                {
+                    return entry;
                 }
             }
 

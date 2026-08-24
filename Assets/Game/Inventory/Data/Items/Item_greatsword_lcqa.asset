@@ -10,21 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 676fe59f2d4a67e45a3347784ad1be26, type: 3}
-  m_Name: Item_gold_sword_kk5o
+  m_Name: Item_greatsword_lcqa
   m_EditorClassIdentifier: Game.Inventory.Runtime::Game.Inventory.Definitions.ItemDefinition
-  itemId: gold_sword_kk5o
-  displayNameKey: item.gold_sword_kk5o.name
-  descriptionKey: A Golden Sword
+  itemId: greatsword_lcqa
+  displayNameKey: item.greatsword_lcqa.name
+  descriptionKey: 
   developerNotes: 
-  icon: {fileID: 21300000, guid: bcb6c5faa086970488e6f1c361ebced7, type: 3}
+  icon: {fileID: 21300000, guid: 1ee6fda88c6c50f498564bfca984776a, type: 3}
   worldModelPrefab: {fileID: 0}
   equippedModelPrefab: {fileID: 0}
   category: {fileID: 11400000, guid: 51fa470ab43c12d479f2b43897733995, type: 2}
   subcategory: {fileID: 0}
-  rarity: {fileID: 11400000, guid: d6c9a43cf59ab2440815924c6d00f2e2, type: 2}
+  rarity: {fileID: 11400000, guid: aa9ecaaf78640e34fbac8243586fa1c6, type: 2}
   gameplayTags: []
-  weight: 5
-  baseValue: 1000
+  weight: 0
+  baseValue: 0
   isStackable: 0
   maxStackSize: 1
   canBeDropped: 1
@@ -37,17 +37,17 @@ MonoBehaviour:
   animationId: 
   useVisualEffect: {fileID: 0}
   weaponPayload:
-    weaponType: 0
-    baseDamage: 10
-    attackSpeed: 0.5
-    staminaCost: 5
-    range: 0
-    handRequirement: 0
+    weaponType: 7
+    baseDamage: 100
+    attackSpeed: 0.1
+    staminaCost: 50
+    range: 10
+    handRequirement: 1
     damageType: 0
-    criticalChance: 0.661
+    criticalChance: 0.665
     criticalMultiplier: 1.5
-    canBlock: 0
-    requiredCharacterLevel: 5
+    canBlock: 1
+    requiredCharacterLevel: 0
     requiredAttributes: []
     weaponPrefabOverride: {fileID: 0}
     animationSetId: 
@@ -56,7 +56,7 @@ MonoBehaviour:
       projectileSpeed: 0
     builtInEnchantment: {fileID: 0}
     durabilitySettings:
-      usesDurability: 1
+      usesDurability: 0
       maxDurability: 100
       durabilityLossPerHit: 1
   armorPayload:

@@ -20,6 +20,12 @@ namespace Game.Inventory.UI.Views
         [SerializeField]
         private string slotId; 
 
+        [SerializeField]
+        private Image backgroundImage;
+
+        private static readonly Color NormalColor = new Color(1f, 1f, 1f, 0.06f);
+        private static readonly Color ReservedColor = new Color(0.3f, 0.3f, 0.3f, 0.4f);
+
         public string SlotId => slotId;
 
         public event System.Action<string> UnequipRequested;
@@ -60,6 +66,11 @@ namespace Game.Inventory.UI.Views
                 {
                     unequipButton.gameObject.SetActive(true);
                 }
+
+                if (backgroundImage != null)
+                {
+                    backgroundImage.color = NormalColor;
+                }
             }
             else
             {
@@ -71,12 +82,17 @@ namespace Game.Inventory.UI.Views
                 if (emptySlotLabel != null)
                 {
                     emptySlotLabel.gameObject.SetActive(true);
-                    emptySlotLabel.text = data.slotDisplayNameKey;
+                    emptySlotLabel.text = data.isReserved ? "—" : data.slotDisplayNameKey;
                 }
 
                 if (unequipButton != null)
                 {
                     unequipButton.gameObject.SetActive(false);
+                }
+
+                if (backgroundImage != null)
+                {
+                    backgroundImage.color = data.isReserved ? ReservedColor : NormalColor;
                 }
             }
         }
