@@ -116,9 +116,16 @@ namespace Game.Inventory.UI.Presenters
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Compare, "context.compare"));
             }
 
-            actions.Add(isFavorite
-                ? ContextMenuActionData.Available(ContextMenuActionKind.Unfavorite, "context.unfavorite")
-                : ContextMenuActionData.Available(ContextMenuActionKind.Favorite, "context.favorite"));
+            bool hasInventoryEntry = FindEntry(instanceId) != null;
+
+            InventoryEntry inventoryEntry = FindEntry(instanceId);
+
+            if (inventoryEntry != null)
+            {
+                actions.Add(inventoryEntry.IsFavorite
+                    ? ContextMenuActionData.Available(ContextMenuActionKind.Unfavorite, "context.unfavorite")
+                    : ContextMenuActionData.Available(ContextMenuActionKind.Favorite, "context.favorite"));
+            }
 
             if (definition.CanBeDropped && !isEquipped)
             {
@@ -323,11 +330,12 @@ namespace Game.Inventory.UI.Presenters
 
         private ItemInstance FindInstanceAnywhere(string instanceId)
         {
-            InventoryEntry entry = FindEntry(instanceId);
-
-            if (entry != null)
+            foreach (InventoryEntry entry in _inventoryService.Container.Entries)
             {
-                return entry.Instance;
+                if (entry.Instance.InstanceId.ToString() == instanceId)
+                {
+                    return entry.Instance;
+                }
             }
 
             foreach (var kvp in _loadout.EquippedBySlot)

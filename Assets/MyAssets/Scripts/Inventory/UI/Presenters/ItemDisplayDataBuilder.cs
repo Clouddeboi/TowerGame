@@ -148,5 +148,18 @@ namespace Game.Inventory.UI.Presenters
                 isFavorite: false,
                 categoryDisplayName: categoryName);
         }
+
+        public bool IsEquipped(ItemInstance instance, EquipmentLoadout loadout)
+        {
+            foreach (var kvp in loadout.EquippedBySlot)
+            {
+                if (kvp.Value == instance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

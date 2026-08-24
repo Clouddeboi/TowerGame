@@ -63,25 +63,25 @@ namespace Game.Inventory.UI.Presenters
                 return ItemDetailsViewModel.Empty;
             }
 
-            InventoryEntry entry = FindEntry(_selectedInstanceId);
+            ItemInstance instance = FindInstanceAnywhere(_selectedInstanceId);
 
-            if (entry == null || !_database.TryResolve(entry.Instance.DefinitionId, out ItemDefinition definition))
+            if (instance == null || !_database.TryResolve(instance.DefinitionId, out ItemDefinition definition))
             {
                 return ItemDetailsViewModel.Empty;
             }
 
-            bool isEquipped = _displayDataBuilder.IsEquipped(entry, _loadout);
-            ItemDisplayData baseData = _displayDataBuilder.Build(entry, isEquipped, false);
+            bool isEquipped = _displayDataBuilder.IsEquipped(instance, _loadout);
+            ItemDisplayData baseData = _displayDataBuilder.BuildForEquippedInstance(instance, isEquipped);
 
             var stats = new List<ItemDetailStat>();
 
             if (definition.HasWeaponData)
             {
-                BuildWeaponStats(definition, entry.Instance, stats);
+                BuildWeaponStats(definition, instance, stats);
             }
             else if (definition.HasArmorData)
             {
-                BuildArmorStats(definition, entry.Instance, stats);
+                BuildArmorStats(definition, instance, stats);
             }
             else if (definition.HasConsumableData)
             {
@@ -103,7 +103,7 @@ namespace Game.Inventory.UI.Presenters
                 stats: stats,
                 requirementsMet: requirementsMet,
                 hasDurability: hasDurability,
-                currentDurability: entry.Instance.Durability,
+                currentDurability: instance.Durability,
                 maxDurability: maxDurability,
                 canEquip: definition.HasWeaponData || definition.HasArmorData,
                 canUse: definition.HasConsumableData,
@@ -118,7 +118,7 @@ namespace Game.Inventory.UI.Presenters
             ItemInstance equippedComparison = ResolveEquippedWeaponForComparison(weapon.HandRequirement);
             ItemDefinition equippedDefinition = null;
 
-            if (equippedComparison != null)
+            if (equippedComparison != null && equippedComparison != instance)
             {
                 _database.TryResolve(equippedComparison.DefinitionId, out equippedDefinition);
             }
@@ -150,7 +150,7 @@ namespace Game.Inventory.UI.Presenters
             ItemInstance equippedInSlot = armor.EquipmentSlot != null ? _loadout.GetEquipped(armor.EquipmentSlot) : null;
             ItemDefinition equippedDefinition = null;
 
-            if (equippedInSlot != null)
+            if (equippedInSlot != null && equippedInSlot != instance)
             {
                 _database.TryResolve(equippedInSlot.DefinitionId, out equippedDefinition);
             }
@@ -256,13 +256,21 @@ namespace Game.Inventory.UI.Presenters
             return true;
         }
 
-        private InventoryEntry FindEntry(string instanceId)
+        private ItemInstance FindInstanceAnywhere(string instanceId)
         {
             foreach (InventoryEntry entry in _inventoryService.Container.Entries)
             {
                 if (entry.Instance.InstanceId.ToString() == instanceId)
                 {
-                    return entry;
+                    return entry.Instance;
+                }
+            }
+
+            foreach (var kvp in _loadout.EquippedBySlot)
+            {
+                if (kvp.Value.InstanceId.ToString() == instanceId)
+                {
+                    return kvp.Value;
                 }
             }
 
