@@ -68,15 +68,15 @@ namespace Game.Inventory.UI.Views
                 nameText.text = viewModel.baseDisplayData.displayName;
             }
 
-            if (descriptionText != null)
-            {
-                descriptionText.text = viewModel.descriptionText;
-            }
-
             if (iconPreviewImage != null)
             {
                 iconPreviewImage.sprite = viewModel.baseDisplayData.icon;
                 iconPreviewImage.enabled = viewModel.baseDisplayData.icon != null;
+            }
+
+            if (descriptionText != null)
+            {
+                descriptionText.text = viewModel.descriptionText;
             }
 
             ClearStatRows();

@@ -98,9 +98,15 @@ namespace Game.Inventory.Editor
 
             // ---------- Inventory tab content: item details panel ----------
 
-            GameObject detailsPanelGo = BuildDetailsPanel(tabContentArea.transform, statRowPrefab, out ItemDetailsView detailsView);
-            SetStretch(detailsPanelGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            detailsPanelGo.SetActive(true); // visibility of the tab itself is managed by RightColumnTabView, not by BuildDetailsPanel's own default-hidden state
+            GameObject detailsPanelGo = BuildDetailsPanel(rightColumnRoot.transform, statRowPrefab, out ItemDetailsView detailsView);
+            SetAnchoredBox(detailsPanelGo, new Vector2(0f, 0f), new Vector2(1f, 0.93f), Vector2.zero, Vector2.zero);
+            detailsPanelGo.transform.SetAsLastSibling();
+
+            // ---------- Inventory tab content: currently empty/minimal, details panel is a
+            //separate floating overlay below, not tab content ----------
+
+            GameObject inventoryTabPanel = FindOrCreateChild(tabContentArea.transform, "InventoryTabPanel");
+            SetStretch(inventoryTabPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
 
             // ---------- Equipment tab content: equipment panel + quick slot bar ----------
 
@@ -152,11 +158,11 @@ namespace Game.Inventory.Editor
             AssignField(tabView, "equipmentTabButton", eqTabBtnGo.GetComponent<Button>());
             AssignField(tabView, "playerStatsTabButton", statsTabBtnGo.GetComponent<Button>());
             AssignField(tabView, "settingsTabButton", settingsTabBtnGo.GetComponent<Button>());
-            AssignField(tabView, "inventoryPanel", detailsPanelGo);
+            AssignField(tabView, "inventoryPanel", inventoryTabPanel);
             AssignField(tabView, "equipmentPanel", equipmentTabPanel);
             AssignField(tabView, "playerStatsPanel", playerStatsPanel);
             AssignField(tabView, "settingsPanel", settingsPanel);
-
+            
             // ---------- floating/overlay elements ----------
 
             GameObject contextMenuGo = BuildContextMenu(canvas.transform, actionButtonPrefab, out ItemContextMenuView contextMenuView);
@@ -610,12 +616,27 @@ namespace Game.Inventory.Editor
             vlg.childControlWidth = true;
             vlg.childForceExpandWidth = false;
 
-            TMP_Text nameText = CreateTmpChild(panel.transform, "NameText", 20f, TextAlignmentOptions.MidlineLeft);
+            GameObject headerRow = CreateChild(panel.transform, "HeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            SetPreferredHeight(headerRow, 28f);
+            var headerHlg = headerRow.GetComponent<HorizontalLayoutGroup>();
+            headerHlg.childAlignment = TextAnchor.MiddleLeft;
+            headerHlg.spacing = 6f;
+            headerHlg.childControlWidth = true;
+            headerHlg.childControlHeight = true;
+
+            TMP_Text nameText = CreateTmpChild(headerRow.transform, "NameText", 20f, TextAlignmentOptions.MidlineLeft);
             nameText.fontStyle = FontStyles.Bold;
-            SetPreferredHeight(nameText.gameObject, 28f);
             LayoutElement nameLayoutElement = nameText.gameObject.AddComponent<LayoutElement>();
             nameLayoutElement.flexibleWidth = 1f;
 
+            GameObject closeButtonGo = CreateChild(headerRow.transform, "CloseButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            closeButtonGo.GetComponent<LayoutElement>().preferredWidth = 24f;
+            closeButtonGo.GetComponent<LayoutElement>().preferredHeight = 24f;
+            closeButtonGo.GetComponent<Image>().color = new Color(0.5f, 0.15f, 0.15f);
+            TMP_Text closeButtonText = CreateTmpChild(closeButtonGo.transform, "Text", 14f, TextAlignmentOptions.Center);
+            closeButtonText.text = "X";
+            SetStretch(closeButtonText.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            
             //square icon, fixed size, self-contained so its child (the durability bar) can
             //size itself directly off the icon's own RectTransform width
             GameObject iconPreviewGo = FindOrCreateChild(panel.transform, "IconPreview", typeof(Image), typeof(LayoutElement));
@@ -682,6 +703,7 @@ namespace Game.Inventory.Editor
             AssignField(detailsView, "requirementsNotMetWarning", requirementsWarning);
             AssignField(detailsView, "durabilityBar", durabilityBg);
             AssignField(detailsView, "durabilityFillImage", durabilityFill);
+            AssignField(detailsView, "closeButton", closeButtonGo.GetComponent<Button>());
 
             panel.SetActive(false);
             return panel;

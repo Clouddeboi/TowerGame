@@ -66,6 +66,9 @@ namespace Game.Inventory.UI
         private ErrorFeedbackPresenter _errorFeedbackPresenter;
         private DragDropController _dragDropController;
 
+        [SerializeField] private Views.PlayerStatsView playerStatsView;
+        private PlayerStatsPresenter _playerStatsPresenter;
+
         private void Awake()
         {
             BuildServices();
@@ -116,6 +119,9 @@ namespace Game.Inventory.UI
 
             var displayedEquipmentSlots = equipmentSlots.FindAll(s => s.SlotId != "TwoHanded");
 
+            var playerStatsPresenter = new PlayerStatsPresenter(null);
+            _playerStatsPresenter = new PlayerStatsPresenter(null);
+
             _inventoryScreenPresenter = new InventoryScreenPresenter(
                 PlayerInventoryService, inventoryView, itemDatabase, displayDataBuilder,
                 Loadout, QuickSlots, Events);
@@ -142,6 +148,11 @@ namespace Game.Inventory.UI
 
         private void WireViews()
         {
+            if (playerStatsView != null)
+            {
+                playerStatsView.Render(_playerStatsPresenter.BuildStatRows());
+            }
+            
             var tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, itemDatabase, new PassthroughLocalizationTextProvider());
             
             //find the PooledEntryList the main screen uses, InventoryScreenView doesn't expose
