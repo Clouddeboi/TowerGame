@@ -14,6 +14,7 @@ using Game.Inventory.UI.Presenters;
 using Game.Inventory.UI.DragAndDrop;
 using Game.Inventory.WorldItems;
 using UnityEngine;
+using Game.Inventory.Player;
 
 namespace Game.Inventory.UI
 {
@@ -67,6 +68,8 @@ namespace Game.Inventory.UI
         private DragDropController _dragDropController;
 
         [SerializeField] private Views.PlayerStatsView playerStatsView;
+        public Player.PlayerStatsService PlayerStats { get; private set; }
+        private PlayerItemUsageContext _playerUsageContext;
         private PlayerStatsPresenter _playerStatsPresenter;
 
         private void Awake()
@@ -96,10 +99,10 @@ namespace Game.Inventory.UI
             Loadout = new EquipmentLoadout();
             var equipmentValidationService = new EquipmentValidationService();
 
-            IStatModifierPort statModifierPort = null;
+            PlayerStats = new Player.PlayerStatsService();
+            _playerUsageContext = new Player.PlayerItemUsageContext(PlayerStats);
 
-            EquipmentService = new EquipmentService(Loadout, PlayerInventoryService, itemDatabase, equipmentValidationService, Events, statModifierPort);
-
+            EquipmentService = new EquipmentService(Loadout, PlayerInventoryService, itemDatabase, equipmentValidationService, Events, PlayerStats);
             QuickSlots = new QuickSlotCollection(quickSlotConfig);
             ItemUseService = new ItemUseService(PlayerInventoryService, itemDatabase, Events);
             QuickSlotService = new QuickSlotService(QuickSlots, PlayerInventoryService, ItemUseService, itemDatabase, Events);
@@ -119,16 +122,15 @@ namespace Game.Inventory.UI
 
             var displayedEquipmentSlots = equipmentSlots.FindAll(s => s.SlotId != "TwoHanded");
 
-            var playerStatsPresenter = new PlayerStatsPresenter(null);
-            _playerStatsPresenter = new PlayerStatsPresenter(null);
-
             _inventoryScreenPresenter = new InventoryScreenPresenter(
                 PlayerInventoryService, inventoryView, itemDatabase, displayDataBuilder,
                 Loadout, QuickSlots, Events);
 
             _itemDetailsPresenter = new ItemDetailsPresenter(
                 PlayerInventoryService, itemDatabase, displayDataBuilder, Loadout,
-                localization, null, Events);
+                localization, PlayerStats, Events);
+
+            _playerStatsPresenter = new PlayerStatsPresenter(PlayerStats, Events);
 
             _equipmentPanelPresenter = new EquipmentPanelPresenter(
                 Loadout, EquipmentService, displayDataBuilder, displayedEquipmentSlots, equipmentSlots, Events);
@@ -203,12 +205,12 @@ namespace Game.Inventory.UI
 
             contextMenuView.ActionChosen += (kind, instanceId) =>
             {
-                if (kind == ContextMenuActionKind.Inspect)
+                if (kind == ContextMenuActionKind.Inspect || kind == ContextMenuActionKind.Compare)
                 {
                     OnEntrySelected(instanceId);
                     return;
                 }
-                
+
                 bool isDestructive = kind == ContextMenuActionKind.Destroy || kind == ContextMenuActionKind.Drop;
 
                 if (isDestructive)
@@ -218,16 +220,17 @@ namespace Game.Inventory.UI
                         kind == ContextMenuActionKind.Destroy ? "confirm.destroy_message" : "confirm.drop_message",
                         () =>
                         {
-                            _contextMenuPresenter.Execute(kind, instanceId, null, Time.time);
-                            inventoryScreenView.SendMessage("RefreshDisplay", SendMessageOptions.DontRequireReceiver);
+                            _contextMenuPresenter.Execute(kind, instanceId, _playerUsageContext, Time.time);
+                            inventoryScreenView.Refresh();
                         },
                         null);
                 }
                 else
                 {
-                    _contextMenuPresenter.Execute(kind, instanceId, null, Time.time);
-                    inventoryScreenView.SendMessage("RefreshDisplay", SendMessageOptions.DontRequireReceiver);
+                    _contextMenuPresenter.Execute(kind, instanceId, _playerUsageContext, Time.time);
+                    inventoryScreenView.Refresh();
                     RefreshEquipmentPanel();
+                    RefreshPlayerStatsPanel();
                 }
             };
 
@@ -289,13 +292,13 @@ namespace Game.Inventory.UI
             for (int i = 0; i < quickSlotViews.Count; i++)
             {
                 int index = i;
-                quickSlotViews[i].UseRequested += slotIndex => _quickSlotBarPresenter.UseSlot(slotIndex, null, Time.time);
+                quickSlotViews[i].UseRequested += slotIndex => _quickSlotBarPresenter.UseSlot(slotIndex, _playerUsageContext, Time.time);            
             }
 
             confirmationDialogView.Initialize(ConfirmationService);
             _errorFeedbackPresenter.ErrorMessageRaised += errorToastView.ShowMessage;
 
-            quickSlotInputBridge.Initialize(QuickSlotService, null);
+            quickSlotInputBridge.Initialize(QuickSlotService, _playerUsageContext);
 
             _inventoryScreenPresenter.Bind();
             _itemDetailsPresenter.Bind();
@@ -306,6 +309,11 @@ namespace Game.Inventory.UI
             _quickSlotBarPresenter.BarInvalidated += RefreshQuickSlotBar;
             RefreshQuickSlotBar();
             _errorFeedbackPresenter.Bind();
+            _playerStatsPresenter.Bind();
+            _playerStatsPresenter.StatsInvalidated += RefreshPlayerStatsPanel;
+
+            PlayerStats.SetCurrentHealthFraction(0.5f);
+            RefreshPlayerStatsPanel();
         }
 
         private void OnEntrySelected(string instanceId)
@@ -370,6 +378,14 @@ namespace Game.Inventory.UI
             }
 
             return visualSlot;
+        }
+
+        private void RefreshPlayerStatsPanel()
+        {
+            if (playerStatsView != null)
+            {
+                playerStatsView.Render(_playerStatsPresenter.BuildStatRows());
+            }
         }
 
         [ContextMenu("Debug: Add Test Items")]

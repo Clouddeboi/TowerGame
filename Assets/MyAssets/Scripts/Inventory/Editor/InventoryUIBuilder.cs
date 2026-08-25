@@ -129,12 +129,17 @@ namespace Game.Inventory.Editor
             playerStatsPanel.GetComponent<Image>().color = new Color(0.06f, 0.06f, 0.08f, 0.9f);
             var playerStatsVlg = playerStatsPanel.GetComponent<VerticalLayoutGroup>();
             playerStatsVlg.padding = new RectOffset(12, 12, 12, 12);
-            playerStatsVlg.spacing = 4f;
-            playerStatsVlg.childControlHeight = false;
+            playerStatsVlg.spacing = 0f;
+            playerStatsVlg.childScaleHeight = true;
+            playerStatsVlg.childScaleWidth = true;
 
             GameObject statsRowParent = FindOrCreateChild(playerStatsPanel.transform, "StatRowParent", typeof(VerticalLayoutGroup), typeof(LayoutElement));
-            statsRowParent.GetComponent<VerticalLayoutGroup>().spacing = 2f;
+            //statsRowParent.GetComponent<VerticalLayoutGroup>().spacing = 0f;
             statsRowParent.GetComponent<LayoutElement>().flexibleHeight = 1f;
+            var statsRowParentVlg = statsRowParent.GetComponent<VerticalLayoutGroup>();
+            statsRowParentVlg.spacing = 0f;
+            statsRowParentVlg.childControlHeight = true;
+            statsRowParentVlg.childControlWidth = true;
 
             PlayerStatsView playerStatsView = playerStatsPanel.GetComponent<PlayerStatsView>();
             if (playerStatsView == null) playerStatsView = playerStatsPanel.AddComponent<PlayerStatsView>();
