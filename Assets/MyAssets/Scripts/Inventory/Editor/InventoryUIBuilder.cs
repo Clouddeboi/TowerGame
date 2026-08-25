@@ -46,23 +46,118 @@ namespace Game.Inventory.Editor
             SetStretch(screenRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             screenRoot.SetActive(false);
 
+            // ---------- left column: list, search, category filters, footer ----------
+
             GameObject leftColumn = FindOrCreateChild(screenRoot.transform, "LeftColumn");
             SetAnchoredBox(leftColumn, new Vector2(0f, 0f), new Vector2(0.6f, 1f), Vector2.zero, Vector2.zero);
 
             GameObject scrollViewGo = BuildScrollView(leftColumn.transform, entryPrefab, out PooledEntryList pooledList);
+            SetAnchoredBox(scrollViewGo, new Vector2(0f, 0.16f), new Vector2(1f, 0.75f), Vector2.zero, Vector2.zero);
+
             GameObject searchFieldGo = BuildSearchField(leftColumn.transform);
+            SetAnchoredBox(searchFieldGo, new Vector2(0f, 0.87f), new Vector2(1f, 0.94f), Vector2.zero, Vector2.zero);
+
+            GameObject footerGo = BuildFooterStats(leftColumn.transform, out TMP_Text weightText, out TMP_Text valueText);
+            SetAnchoredBox(footerGo, new Vector2(0f, 0f), new Vector2(1f, 0.09f), Vector2.zero, Vector2.zero);
+
+            // category filters now occupy the space equipment used to sit in on the left side
             List<ItemCategoryDefinition> categories = LoadAllAssets<ItemCategoryDefinition>();
             GameObject categoryTabsGo = BuildCategoryTabs(leftColumn.transform, categories, out var tabButtons, out Toggle favoritesToggle);
-            GameObject footerGo = BuildFooterStats(leftColumn.transform, out TMP_Text weightText, out TMP_Text valueText);
+            SetAnchoredBox(categoryTabsGo, new Vector2(0f, 0.76f), new Vector2(1f, 0.86f), Vector2.zero, Vector2.zero);
 
-            GameObject detailsPanelGo = BuildDetailsPanel(screenRoot.transform, statRowPrefab, out ItemDetailsView detailsView);
+            var buttonList = new List<Button>();
+            var targetList = new List<ItemCategoryDefinition>();
+
+            foreach (var (button, category) in tabButtons)
+            {
+                buttonList.Add(button);
+                targetList.Add(category);
+            }
+
+            // ---------- right column: tab bar + tabbed content area ----------
+
+            GameObject rightColumnRoot = FindOrCreateChild(screenRoot.transform, "RightColumnRoot");
+            SetAnchoredBox(rightColumnRoot, new Vector2(0.62f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+
+            GameObject tabBar = FindOrCreateChild(rightColumnRoot.transform, "TabBar", typeof(HorizontalLayoutGroup));
+            SetAnchoredBox(tabBar, new Vector2(0f, 0.94f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+            var tabBarHlg = tabBar.GetComponent<HorizontalLayoutGroup>();
+            tabBarHlg.spacing = 2f;
+            tabBarHlg.childControlWidth = true;
+            tabBarHlg.childControlHeight = true;
+            tabBarHlg.childForceExpandWidth = true;
+            tabBarHlg.childForceExpandHeight = true;
+
+            GameObject invTabBtnGo = CreateButtonWithLabel(tabBar.transform, "InventoryTabButton", "Inventory");
+            GameObject eqTabBtnGo = CreateButtonWithLabel(tabBar.transform, "EquipmentTabButton", "Equipment");
+            GameObject statsTabBtnGo = CreateButtonWithLabel(tabBar.transform, "PlayerStatsTabButton", "Stats");
+            GameObject settingsTabBtnGo = CreateButtonWithLabel(tabBar.transform, "SettingsTabButton", "Settings");
+
+            GameObject tabContentArea = FindOrCreateChild(rightColumnRoot.transform, "TabContentArea");
+            SetAnchoredBox(tabContentArea, new Vector2(0f, 0f), new Vector2(1f, 0.93f), Vector2.zero, Vector2.zero);
+
+            // ---------- Inventory tab content: item details panel ----------
+
+            GameObject detailsPanelGo = BuildDetailsPanel(tabContentArea.transform, statRowPrefab, out ItemDetailsView detailsView);
+            SetStretch(detailsPanelGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            detailsPanelGo.SetActive(true); // visibility of the tab itself is managed by RightColumnTabView, not by BuildDetailsPanel's own default-hidden state
+
+            // ---------- Equipment tab content: equipment panel + quick slot bar ----------
+
+            GameObject equipmentTabPanel = FindOrCreateChild(tabContentArea.transform, "EquipmentTabPanel");
+            SetStretch(equipmentTabPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
 
             List<EquipmentSlotDefinition> slotDefs = LoadAllAssets<EquipmentSlotDefinition>();
-            GameObject equipmentPanelGo = BuildEquipmentPanel(screenRoot.transform, slotDefs, out List<EquipmentSlotView> equipmentSlotViews);
+            GameObject equipmentPanelGo = BuildEquipmentPanel(equipmentTabPanel.transform, slotDefs, out List<EquipmentSlotView> equipmentSlotViews);
+            SetAnchoredBox(equipmentPanelGo, new Vector2(0f, 0.2f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
 
             QuickSlotBehaviourConfig quickSlotConfig = LoadFirstAsset<QuickSlotBehaviourConfig>();
             int quickSlotCount = quickSlotConfig != null ? quickSlotConfig.SlotCount : 8;
-            GameObject quickSlotBarGo = BuildQuickSlotBar(screenRoot.transform, quickSlotCount, out List<QuickSlotView> quickSlotViews);
+            GameObject quickSlotBarGo = BuildQuickSlotBar(equipmentTabPanel.transform, quickSlotCount, out List<QuickSlotView> quickSlotViews);
+            SetAnchoredBox(quickSlotBarGo, new Vector2(0f, 0f), new Vector2(1f, 0.18f), Vector2.zero, Vector2.zero);
+
+            // ---------- Player Stats tab content ----------
+
+            GameObject playerStatsPanel = FindOrCreateChild(tabContentArea.transform, "PlayerStatsPanel", typeof(Image), typeof(VerticalLayoutGroup));
+            SetStretch(playerStatsPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            playerStatsPanel.GetComponent<Image>().color = new Color(0.06f, 0.06f, 0.08f, 0.9f);
+            var playerStatsVlg = playerStatsPanel.GetComponent<VerticalLayoutGroup>();
+            playerStatsVlg.padding = new RectOffset(12, 12, 12, 12);
+            playerStatsVlg.spacing = 4f;
+            playerStatsVlg.childControlHeight = false;
+
+            GameObject statsRowParent = FindOrCreateChild(playerStatsPanel.transform, "StatRowParent", typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            statsRowParent.GetComponent<VerticalLayoutGroup>().spacing = 2f;
+            statsRowParent.GetComponent<LayoutElement>().flexibleHeight = 1f;
+
+            PlayerStatsView playerStatsView = playerStatsPanel.GetComponent<PlayerStatsView>();
+            if (playerStatsView == null) playerStatsView = playerStatsPanel.AddComponent<PlayerStatsView>();
+            AssignField(playerStatsView, "statRowParent", statsRowParent.transform);
+            AssignField(playerStatsView, "statRowPrefab", statRowPrefab);
+
+            // ---------- Settings tab content (placeholder overlay) ----------
+
+            GameObject settingsPanel = FindOrCreateChild(tabContentArea.transform, "SettingsPanel", typeof(Image));
+            SetStretch(settingsPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            settingsPanel.GetComponent<Image>().color = new Color(0.04f, 0.04f, 0.05f, 0.98f);
+            TMP_Text settingsPlaceholder = CreateTmpChild(settingsPanel.transform, "PlaceholderText", 16f, TextAlignmentOptions.Center);
+            settingsPlaceholder.text = "Settings (placeholder)";
+            SetStretch(settingsPlaceholder.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+
+            // ---------- tab controller wiring ----------
+
+            RightColumnTabView tabView = rightColumnRoot.GetComponent<RightColumnTabView>();
+            if (tabView == null) tabView = rightColumnRoot.AddComponent<RightColumnTabView>();
+            AssignField(tabView, "inventoryTabButton", invTabBtnGo.GetComponent<Button>());
+            AssignField(tabView, "equipmentTabButton", eqTabBtnGo.GetComponent<Button>());
+            AssignField(tabView, "playerStatsTabButton", statsTabBtnGo.GetComponent<Button>());
+            AssignField(tabView, "settingsTabButton", settingsTabBtnGo.GetComponent<Button>());
+            AssignField(tabView, "inventoryPanel", detailsPanelGo);
+            AssignField(tabView, "equipmentPanel", equipmentTabPanel);
+            AssignField(tabView, "playerStatsPanel", playerStatsPanel);
+            AssignField(tabView, "settingsPanel", settingsPanel);
+
+            // ---------- floating/overlay elements ----------
 
             GameObject contextMenuGo = BuildContextMenu(canvas.transform, actionButtonPrefab, out ItemContextMenuView contextMenuView);
             GameObject tooltipGo = BuildTooltip(canvas.transform, out TooltipView tooltipView);
@@ -75,14 +170,7 @@ namespace Game.Inventory.Editor
             BuildDragGhost(canvas.transform, out DragGhostView dragGhostView);
             dragGhostView.transform.SetAsLastSibling();
 
-            var buttonList = new List<Button>();
-            var targetList = new List<ItemCategoryDefinition>();
-
-            foreach (var (button, category) in tabButtons)
-            {
-                buttonList.Add(button);
-                targetList.Add(category);
-            }
+            // ---------- InventoryScreenView wiring ----------
 
             QuickSlotInputBridge inputBridge = FindOrCreateQuickSlotInputBridge();
 
@@ -97,6 +185,8 @@ namespace Game.Inventory.Editor
             AssignField(inventoryScreenView, "weightText", weightText);
             AssignField(inventoryScreenView, "valueText", valueText);
             AssignField(inventoryScreenView, "rootPanel", screenRoot);
+
+            // ---------- composition root wiring ----------
 
             InventoryCompositionRoot compositionRoot = FindOrCreateCompositionRoot();
 
@@ -115,6 +205,7 @@ namespace Game.Inventory.Editor
             AssignField(compositionRoot, "confirmationDialogView", confirmationView);
             AssignField(compositionRoot, "errorToastView", errorToastView);
             AssignField(compositionRoot, "quickSlotInputBridge", inputBridge);
+            AssignField(compositionRoot, "playerStatsView", playerStatsView);
 
             EditorUtility.SetDirty(compositionRoot);
             EditorUtility.SetDirty(inventoryScreenView);

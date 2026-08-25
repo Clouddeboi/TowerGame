@@ -36,8 +36,19 @@ namespace Game.Inventory.UI.Views
         [SerializeField]
         private UnityEngine.UI.Image durabilityFillImage;
 
+        [SerializeField]
+        private Button closeButton;
+
         private readonly System.Collections.Generic.List<ItemDetailStatRowView> _spawnedRows = new System.Collections.Generic.List<ItemDetailStatRowView>();
 
+        private void Awake()
+        {
+            if (closeButton != null)
+            {
+                closeButton.onClick.AddListener(() => Render(ItemDetailsViewModel.Empty));
+            }
+        }
+        
         public void Render(ItemDetailsViewModel viewModel)
         {
             bool hasSelection = !string.IsNullOrEmpty(viewModel.baseDisplayData.instanceId);
