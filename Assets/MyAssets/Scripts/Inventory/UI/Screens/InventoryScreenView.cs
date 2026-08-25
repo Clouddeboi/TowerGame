@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Game.Inventory.Definitions;
 using Game.Inventory.UI.Entries;
 using Game.Inventory.UI.Presenters;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Game.Inventory.UI.Screens
 {
@@ -25,6 +27,15 @@ namespace Game.Inventory.UI.Screens
 
         [SerializeField]
         private GameObject rootPanel;
+        
+        [SerializeField]
+        private List<Button> categoryTabButtons = new List<Button>();
+
+        [SerializeField]
+        private List<ItemCategoryDefinition> categoryTabTargets = new List<ItemCategoryDefinition>();
+
+        [SerializeField]
+        private Toggle favoritesToggle;
 
         private InventoryScreenPresenter _presenter;
 
@@ -105,6 +116,22 @@ namespace Game.Inventory.UI.Screens
             if (valueText != null)
             {
                 valueText.text = _presenter.CurrentValue.ToString();
+            }
+        }
+
+        public void WireCategoryTabs(System.Action<ItemCategoryDefinition> onCategorySelected, System.Action<bool> onFavoritesToggled)
+        {
+            for (int i = 0; i < categoryTabButtons.Count; i++)
+            {
+                ItemCategoryDefinition target = i < categoryTabTargets.Count ? categoryTabTargets[i] : null;
+                Button button = categoryTabButtons[i];
+
+                button.onClick.AddListener(() => onCategorySelected(target));
+            }
+
+            if (favoritesToggle != null)
+            {
+                favoritesToggle.onValueChanged.AddListener(value => onFavoritesToggled(value));
             }
         }
 

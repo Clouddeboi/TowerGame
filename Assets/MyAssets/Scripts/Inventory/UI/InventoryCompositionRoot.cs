@@ -238,6 +238,10 @@ namespace Game.Inventory.UI
             inventoryScreenView.Initialize(_inventoryScreenPresenter);
             inventoryScreenView.EntrySelected += OnEntrySelected;
 
+            inventoryScreenView.WireCategoryTabs(
+                category => _inventoryScreenPresenter.SetCategory(category),
+                favoritesOnly => _inventoryScreenPresenter.SetFavoritesOnly(favoritesOnly));
+
             for (int i = 0; i < equipmentSlots.Count && i < equipmentSlotViews.Count; i++)
             {
                 var slot = equipmentSlots[i];

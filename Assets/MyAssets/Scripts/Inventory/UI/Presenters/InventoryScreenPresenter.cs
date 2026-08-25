@@ -26,6 +26,8 @@ namespace Game.Inventory.UI.Presenters
         private IInventorySortComparer _activeSortComparer;
         private bool _sortDescending;
 
+        private bool _favoritesOnly;
+
         public InventoryScreenPresenter(
             InventoryService inventoryService,
             InventoryView inventoryView,
@@ -88,13 +90,18 @@ namespace Game.Inventory.UI.Presenters
                 filters.Add(new SearchTextFilter(_searchText));
             }
 
+            if (_favoritesOnly)
+            {
+                filters.Add(new FavoriteFilter());
+            }
+
             IReadOnlyList<InventoryEntry> entries = _inventoryView.GetFilteredAndSorted(filters, _activeSortComparer, _sortDescending);
 
             var result = new List<ItemDisplayData>(entries.Count);
 
             foreach (InventoryEntry entry in entries)
             {
-                bool isEquipped = _displayDataBuilder.IsEquipped(entry, _loadout);
+                bool isEquipped = _displayDataBuilder.IsEquipped(entry.Instance, _loadout);
                 bool isAssigned = _displayDataBuilder.IsAssignedToQuickSlot(entry, _quickSlots);
 
                 result.Add(_displayDataBuilder.Build(entry, isEquipped, isAssigned));
@@ -118,6 +125,13 @@ namespace Game.Inventory.UI.Presenters
             events.ItemUnequipped -= OnItemUnequipped;
             events.QuickSlotChanged -= OnQuickSlotChanged;
         }
+        public void SetFavoritesOnly(bool favoritesOnly)
+        {
+            _favoritesOnly = favoritesOnly;
+            DisplayInvalidated?.Invoke();
+        }
+
+        public bool FavoritesOnly => _favoritesOnly;
 
         private void OnInventoryChanged(InventoryChangedEvent payload) => DisplayInvalidated?.Invoke();
 

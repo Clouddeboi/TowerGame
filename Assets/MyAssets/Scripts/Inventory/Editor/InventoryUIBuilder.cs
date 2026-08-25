@@ -51,6 +51,8 @@ namespace Game.Inventory.Editor
 
             GameObject scrollViewGo = BuildScrollView(leftColumn.transform, entryPrefab, out PooledEntryList pooledList);
             GameObject searchFieldGo = BuildSearchField(leftColumn.transform);
+            List<ItemCategoryDefinition> categories = LoadAllAssets<ItemCategoryDefinition>();
+            GameObject categoryTabsGo = BuildCategoryTabs(leftColumn.transform, categories, out var tabButtons, out Toggle favoritesToggle);
             GameObject footerGo = BuildFooterStats(leftColumn.transform, out TMP_Text weightText, out TMP_Text valueText);
 
             GameObject detailsPanelGo = BuildDetailsPanel(screenRoot.transform, statRowPrefab, out ItemDetailsView detailsView);
@@ -73,11 +75,23 @@ namespace Game.Inventory.Editor
             BuildDragGhost(canvas.transform, out DragGhostView dragGhostView);
             dragGhostView.transform.SetAsLastSibling();
 
+            var buttonList = new List<Button>();
+            var targetList = new List<ItemCategoryDefinition>();
+
+            foreach (var (button, category) in tabButtons)
+            {
+                buttonList.Add(button);
+                targetList.Add(category);
+            }
+
             QuickSlotInputBridge inputBridge = FindOrCreateQuickSlotInputBridge();
 
             InventoryScreenView inventoryScreenView = screenRoot.GetComponent<InventoryScreenView>();
             if (inventoryScreenView == null) inventoryScreenView = screenRoot.AddComponent<InventoryScreenView>();
 
+            AssignField(inventoryScreenView, "categoryTabButtons", buttonList);
+            AssignField(inventoryScreenView, "categoryTabTargets", targetList);
+            AssignField(inventoryScreenView, "favoritesToggle", favoritesToggle);
             AssignField(inventoryScreenView, "entryList", pooledList);
             AssignField(inventoryScreenView, "searchField", searchFieldGo.GetComponent<TMP_InputField>());
             AssignField(inventoryScreenView, "weightText", weightText);
@@ -305,6 +319,110 @@ namespace Game.Inventory.Editor
             AssignField(view, "negativeDeltaColor", new Color(0.85f, 0.25f, 0.2f));
 
             return SaveAsPrefabAndDestroy<ItemDetailStatRowView>(root, path);
+        }
+
+        private static GameObject BuildCategoryTabs(Transform parent, List<ItemCategoryDefinition> categories, out List<(Button button, ItemCategoryDefinition category)> tabButtons, out Toggle favoritesToggle)
+        {
+            GameObject scrollGo = FindOrCreateChild(parent, "CategoryTabs", typeof(Image), typeof(Mask), typeof(ScrollRect));
+            SetAnchoredBox(scrollGo, new Vector2(0f, 0.94f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+            scrollGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.1f);
+            scrollGo.GetComponent<Mask>().showMaskGraphic = true;
+
+            GameObject viewportGo = FindOrCreateChild(scrollGo.transform, "Viewport", typeof(RectTransform), typeof(RectMask2D));
+            SetStretch(viewportGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+
+            GameObject contentGo = FindOrCreateChild(viewportGo.transform, "Content", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter));
+            var contentRt = contentGo.GetComponent<RectTransform>();
+            contentRt.anchorMin = new Vector2(0f, 0f);
+            contentRt.anchorMax = new Vector2(0f, 1f);
+            contentRt.pivot = new Vector2(0f, 0.5f);
+            contentRt.anchoredPosition = Vector2.zero;
+
+            var contentHlg = contentGo.GetComponent<HorizontalLayoutGroup>();
+            contentHlg.spacing = 4f;
+            contentHlg.padding = new RectOffset(4, 4, 2, 2);
+            contentHlg.childControlWidth = false;
+            contentHlg.childControlHeight = true;
+            contentHlg.childAlignment = TextAnchor.MiddleLeft;
+            contentGo.GetComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var scrollRect = scrollGo.GetComponent<ScrollRect>();
+            scrollRect.viewport = viewportGo.GetComponent<RectTransform>();
+            scrollRect.content = contentRt;
+            scrollRect.horizontal = true;
+            scrollRect.vertical = false;
+
+            tabButtons = new List<(Button, ItemCategoryDefinition)>();
+
+            //"All" tab clears category filtering entirely
+            GameObject allTabGo = CreateTabButton(contentGo.transform, "Tab_All", "All");
+            tabButtons.Add((allTabGo.GetComponent<Button>(), null));
+
+            //top-level categories first, then their subcategories immediately after, so
+            //the flat scrollable row still reads as grouped left-to-right
+            foreach (ItemCategoryDefinition category in categories)
+            {
+                if (category.ParentCategory != null)
+                {
+                    continue;
+                }
+
+                GameObject tabGo = CreateTabButton(contentGo.transform, "Tab_" + category.name, category.name);
+                tabButtons.Add((tabGo.GetComponent<Button>(), category));
+
+                foreach (ItemCategoryDefinition sub in categories)
+                {
+                    if (sub.ParentCategory == category)
+                    {
+                        GameObject subTabGo = CreateTabButton(contentGo.transform, "Tab_" + sub.name, "  " + sub.name);
+                        tabButtons.Add((subTabGo.GetComponent<Button>(), sub));
+                    }
+                }
+            }
+
+            //Favorites toggle sits at the end of the row
+            GameObject favToggleGo = FindOrCreateChild(contentGo.transform, "FavoritesToggle", typeof(Image), typeof(Toggle), typeof(LayoutElement));
+            favToggleGo.GetComponent<LayoutElement>().preferredWidth = 90f;
+            favToggleGo.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.08f);
+            favoritesToggle = favToggleGo.GetComponent<Toggle>();
+            favoritesToggle.targetGraphic = favToggleGo.GetComponent<Image>();
+
+            GameObject checkmarkGo = FindOrCreateChild(favToggleGo.transform, "Checkmark", typeof(Image));
+            SetSize(checkmarkGo, new Vector2(16f, 16f));
+            var checkmarkRt = checkmarkGo.GetComponent<RectTransform>();
+            checkmarkRt.anchorMin = new Vector2(0f, 0.5f);
+            checkmarkRt.anchorMax = new Vector2(0f, 0.5f);
+            checkmarkRt.anchoredPosition = new Vector2(12f, 0f);
+            checkmarkGo.GetComponent<Image>().color = new Color(1f, 0.8f, 0.2f);
+            favoritesToggle.graphic = checkmarkGo.GetComponent<Image>();
+
+            TMP_Text favLabel = CreateTmpChild(favToggleGo.transform, "Label", 12f, TextAlignmentOptions.MidlineLeft);
+            favLabel.text = "Favorites";
+            var favLabelRt = favLabel.GetComponent<RectTransform>();
+            favLabelRt.anchorMin = new Vector2(0f, 0f);
+            favLabelRt.anchorMax = new Vector2(1f, 1f);
+            favLabelRt.offsetMin = new Vector2(28f, 0f);
+            favLabelRt.offsetMax = Vector2.zero;
+
+            return scrollGo;
+        }
+
+        private static GameObject CreateTabButton(Transform parent, string name, string label)
+        {
+            GameObject go = FindOrCreateChild(parent, name, typeof(Image), typeof(Button), typeof(LayoutElement));
+            go.GetComponent<LayoutElement>().preferredWidth = 90f;
+            go.GetComponent<LayoutElement>().preferredHeight = 28f;
+            go.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.06f);
+
+            TMP_Text text = FindChildByName(go.transform, "Text")?.GetComponent<TMP_Text>();
+            if (text == null)
+            {
+                text = CreateTmpChild(go.transform, "Text", 12f, TextAlignmentOptions.Center);
+                SetStretch(text.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            }
+            text.text = label;
+
+            return go;
         }
 
         // ---------- Screen sections ----------
