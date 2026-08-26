@@ -172,6 +172,10 @@ namespace Game.Inventory.Editor
 
             GameObject contextMenuGo = BuildContextMenu(canvas.transform, actionButtonPrefab, out ItemContextMenuView contextMenuView);
             GameObject tooltipGo = BuildTooltip(canvas.transform, out TooltipView tooltipView);
+
+            GameObject tooltipControllerGo = FindOrCreateChild(canvas.transform, "TooltipDelayController");
+            TooltipDelayController tooltipDelayController = tooltipControllerGo.GetComponent<TooltipDelayController>();
+            if (tooltipDelayController == null) tooltipDelayController = tooltipControllerGo.AddComponent<TooltipDelayController>();            
             GameObject confirmationGo = BuildConfirmationDialog(canvas.transform, out ConfirmationDialogView confirmationView);
             GameObject errorToastGo = BuildErrorToast(canvas.transform, out ErrorToastView errorToastView);
 
@@ -217,6 +221,7 @@ namespace Game.Inventory.Editor
             AssignField(compositionRoot, "errorToastView", errorToastView);
             AssignField(compositionRoot, "quickSlotInputBridge", inputBridge);
             AssignField(compositionRoot, "playerStatsView", playerStatsView);
+            AssignField(compositionRoot, "tooltipDelayController", tooltipDelayController);
 
             EditorUtility.SetDirty(compositionRoot);
             EditorUtility.SetDirty(inventoryScreenView);
@@ -918,25 +923,50 @@ namespace Game.Inventory.Editor
         [System.Obsolete]
         private static GameObject BuildTooltip(Transform parent, out TooltipView view)
         {
-            GameObject go = FindOrCreateChild(parent, "TooltipPanel", typeof(Image), typeof(VerticalLayoutGroup));
-            SetSize(go, new Vector2(260f, 120f));
+            GameObject go = FindOrCreateChild(parent, "TooltipPanel", typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
             go.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.05f, 0.95f);
-            var vlg = go.GetComponent<VerticalLayoutGroup>();
-            vlg.padding = new RectOffset(8, 8, 8, 8);
-            vlg.spacing = 3f;
-            vlg.childControlHeight = false;
 
             var rt = go.GetComponent<RectTransform>();
             rt.pivot = new Vector2(0f, 1f);
+            rt.sizeDelta = new Vector2(260f, 0f); //fixed width, height driven by content
+
+            var vlg = go.GetComponent<VerticalLayoutGroup>();
+            vlg.padding = new RectOffset(10, 10, 8, 8);
+            vlg.spacing = 3f;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+
+            var fitter = go.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
             TMP_Text nameText = CreateTmpChild(go.transform, "NameText", 14f, TextAlignmentOptions.MidlineLeft);
             nameText.fontStyle = FontStyles.Bold;
+            LayoutElement nameLe = nameText.gameObject.AddComponent<LayoutElement>();
+            nameLe.preferredHeight = 18f;
+
             TMP_Text rarityText = CreateTmpChild(go.transform, "RarityText", 11f, TextAlignmentOptions.MidlineLeft);
+            LayoutElement rarityLe = rarityText.gameObject.AddComponent<LayoutElement>();
+            rarityLe.preferredHeight = 14f;
+
             TMP_Text descriptionText = CreateTmpChild(go.transform, "DescriptionText", 11f, TextAlignmentOptions.TopLeft);
             descriptionText.enableWordWrapping = true;
-            SetPreferredHeight(descriptionText.gameObject, 50f);
+            LayoutElement descriptionLe = descriptionText.gameObject.AddComponent<LayoutElement>();
+            descriptionLe.flexibleWidth = 1f;
+
             TMP_Text weightValueText = CreateTmpChild(go.transform, "WeightValueText", 10f, TextAlignmentOptions.MidlineLeft);
             weightValueText.color = new Color(0.7f, 0.7f, 0.7f);
+            LayoutElement weightValueLe = weightValueText.gameObject.AddComponent<LayoutElement>();
+            weightValueLe.preferredHeight = 14f;
+
+            TMP_Text requirementsWarningText = CreateTmpChild(go.transform, "RequirementsWarningText", 11f, TextAlignmentOptions.MidlineLeft);
+            requirementsWarningText.color = new Color(0.9f, 0.25f, 0.2f);
+            requirementsWarningText.fontStyle = FontStyles.Bold;
+            LayoutElement requirementsWarningLe = requirementsWarningText.gameObject.AddComponent<LayoutElement>();
+            requirementsWarningLe.preferredHeight = 16f;
+            requirementsWarningText.gameObject.SetActive(false);
 
             view = go.GetComponent<TooltipView>();
             if (view == null) view = go.AddComponent<TooltipView>();
@@ -947,6 +977,7 @@ namespace Game.Inventory.Editor
             AssignField(view, "rarityText", rarityText);
             AssignField(view, "descriptionText", descriptionText);
             AssignField(view, "weightValueText", weightValueText);
+            AssignField(view, "requirementsWarningText", requirementsWarningText);
 
             go.SetActive(false);
             return go;

@@ -72,6 +72,8 @@ namespace Game.Inventory.UI
         private PlayerItemUsageContext _playerUsageContext;
         private PlayerStatsPresenter _playerStatsPresenter;
 
+        [SerializeField] private Tooltips.TooltipDelayController tooltipDelayController;
+
         private void Awake()
         {
             BuildServices();
@@ -142,7 +144,7 @@ namespace Game.Inventory.UI
                 PlayerInventoryService, EquipmentService, new EquipmentValidationService(), Loadout,
                 QuickSlotService, QuickSlots, ItemUseService, itemDatabase, equipmentSlots);
 
-            _tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, itemDatabase, localization);
+            _tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, localization);
             _errorFeedbackPresenter = new ErrorFeedbackPresenter(localization, Events);
 
             _dragDropController = new DragDropController(PlayerInventoryService, EquipmentService, QuickSlotService, itemDatabase);
@@ -154,31 +156,20 @@ namespace Game.Inventory.UI
             {
                 playerStatsView.Render(_playerStatsPresenter.BuildStatRows());
             }
-            
-            var tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, itemDatabase, new PassthroughLocalizationTextProvider());
-            
+                        
             //find the PooledEntryList the main screen uses, InventoryScreenView doesn't expose
             //it publicly yet, so this reaches it via the serialized field on the view for now
             var entryList = inventoryScreenView.GetComponentInChildren<Entries.PooledEntryList>();
             Debug.Log($"entryList found: {entryList != null}");
 
+            var tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, new PassthroughLocalizationTextProvider());
+            tooltipDelayController.Initialize(tooltipPresenter, tooltipView);
+
             if (entryList != null)
             {
                 entryList.SetHoverHandler(
-                    (instanceId, screenPos) =>
-                    {
-                        //Debug.Log($"Attempting tooltip for {instanceId}");
-                        if (tooltipPresenter.TryBuild(instanceId, out var tooltipData))
-                        {
-                            //Debug.Log($"Tooltip data built: {tooltipData.displayName}, showing at {screenPos}");
-                            tooltipView.Show(tooltipData, screenPos);
-                        }
-                        else
-                        {
-                            Debug.Log("TryBuild returned false");
-                        }
-                    },
-                    () => tooltipView.Hide());
+                    (instanceId, screenPos) => tooltipDelayController.RequestShow(instanceId, screenPos),
+                    () => tooltipDelayController.CancelShow());
             }
 
             var dragCoordinator = new DragAndDrop.PointerDragCoordinator(
@@ -287,12 +278,17 @@ namespace Game.Inventory.UI
                         rt.position = screenPos;
                     }
                 };
+
+                view.HoverStarted += (instanceId, screenPos) => tooltipDelayController.RequestShow(instanceId, screenPos);
+                view.HoverEnded += () => tooltipDelayController.CancelShow();
             }
 
             for (int i = 0; i < quickSlotViews.Count; i++)
             {
                 int index = i;
-                quickSlotViews[i].UseRequested += slotIndex => _quickSlotBarPresenter.UseSlot(slotIndex, _playerUsageContext, Time.time);            
+                quickSlotViews[i].UseRequested += slotIndex => _quickSlotBarPresenter.UseSlot(slotIndex, _playerUsageContext, Time.time);
+                quickSlotViews[i].HoverStarted += (instanceId, screenPos) => tooltipDelayController.RequestShow(instanceId, screenPos);
+                quickSlotViews[i].HoverEnded += () => tooltipDelayController.CancelShow();
             }
 
             confirmationDialogView.Initialize(ConfirmationService);

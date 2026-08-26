@@ -1,3 +1,4 @@
+using Game.Inventory.Instances;
 using Game.Inventory.UI.Presenters;
 using TMPro;
 using UnityEngine;
@@ -6,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Game.Inventory.UI.Views
 {
-    public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler
+    public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         [SerializeField]
         private Image iconImage;
@@ -31,6 +32,11 @@ namespace Game.Inventory.UI.Views
         public event System.Action<string> UnequipRequested;
         public event System.Action<string, Vector2> RightClicked;
 
+        public event System.Action<string, Vector2> HoverStarted;
+        public event System.Action HoverEnded;
+
+        private string _equippedInstanceId;
+
         private void Awake()
         {
             if (unequipButton != null)
@@ -49,6 +55,8 @@ namespace Game.Inventory.UI.Views
 
         public void Bind(EquipmentSlotDisplayData data)
         {
+            _equippedInstanceId = data.isOccupied ? data.itemData.instanceId : null;
+
             if (data.isOccupied)
             {
                 if (iconImage != null)
@@ -108,6 +116,19 @@ namespace Game.Inventory.UI.Views
             {
                 RightClicked?.Invoke(SlotId, eventData.position);
             }
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (!string.IsNullOrEmpty(_equippedInstanceId))
+            {
+                HoverStarted?.Invoke(_equippedInstanceId, eventData.position);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            HoverEnded?.Invoke();
         }
 
         public void SetSlotId(string newSlotId)

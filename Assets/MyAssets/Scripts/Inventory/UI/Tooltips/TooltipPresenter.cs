@@ -1,5 +1,7 @@
 using Game.Inventory.Containers;
 using Game.Inventory.Definitions;
+using Game.Inventory.Equipment;
+using Game.Inventory.Instances;
 using Game.Inventory.Interfaces;
 using Game.Inventory.Operations;
 using UnityEngine;
@@ -11,21 +13,23 @@ namespace Game.Inventory.UI.Tooltips
     public class TooltipPresenter
     {
         private readonly InventoryService _inventoryService;
+        private readonly EquipmentLoadout _loadout;
         private readonly ItemDatabase _database;
         private readonly ILocalizationTextProvider _localization;
 
-        public TooltipPresenter(InventoryService inventoryService, ItemDatabase database, ILocalizationTextProvider localization)
+        public TooltipPresenter(InventoryService inventoryService, EquipmentLoadout loadout, ItemDatabase database, ILocalizationTextProvider localization)
         {
             _inventoryService = inventoryService;
+            _loadout = loadout;
             _database = database;
             _localization = localization;
         }
 
         public bool TryBuild(string instanceId, out TooltipData data)
         {
-            InventoryEntry entry = FindEntry(instanceId);
+            ItemInstance instance = FindInstanceAnywhere(instanceId);
 
-            if (entry == null || !_database.TryResolve(entry.Instance.DefinitionId, out ItemDefinition definition))
+            if (instance == null || !_database.TryResolve(instance.DefinitionId, out ItemDefinition definition))
             {
                 data = default;
                 return false;
@@ -39,19 +43,27 @@ namespace Game.Inventory.UI.Tooltips
                 rarityDisplayName: rarityName,
                 rarityColor: rarityColor,
                 shortDescription: _localization.Resolve(definition.DescriptionKey),
-                weight: definition.Weight * entry.Instance.Quantity,
-                value: definition.BaseValue * entry.Instance.Quantity);
+                weight: definition.Weight * instance.Quantity,
+                value: definition.BaseValue * instance.Quantity);
 
             return true;
         }
 
-        private InventoryEntry FindEntry(string instanceId)
+        private ItemInstance FindInstanceAnywhere(string instanceId)
         {
             foreach (InventoryEntry entry in _inventoryService.Container.Entries)
             {
                 if (entry.Instance.InstanceId.ToString() == instanceId)
                 {
-                    return entry;
+                    return entry.Instance;
+                }
+            }
+
+            foreach (var kvp in _loadout.EquippedBySlot)
+            {
+                if (kvp.Value.InstanceId.ToString() == instanceId)
+                {
+                    return kvp.Value;
                 }
             }
 
