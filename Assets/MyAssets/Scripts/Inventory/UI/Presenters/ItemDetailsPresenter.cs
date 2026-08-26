@@ -141,6 +141,8 @@ namespace Game.Inventory.UI.Presenters
             {
                 stats.Add(new ItemDetailStat("stat.can_block", _localization.Resolve("common.yes"), null));
             }
+
+            AppendRequirementStats(definition, stats);
         }
 
         private void BuildArmorStats(ItemDefinition definition, ItemInstance instance, List<ItemDetailStat> stats)
@@ -169,6 +171,8 @@ namespace Game.Inventory.UI.Presenters
                     stats.Add(new ItemDetailStat("stat.resistance." + resistance.damageType, (resistance.resistanceAmount * 100f).ToString("0.#") + "%", null));
                 }
             }
+
+            AppendRequirementStats(definition, stats);
         }
 
         private void BuildConsumableStats(ItemDefinition definition, List<ItemDetailStat> stats)
@@ -254,6 +258,45 @@ namespace Game.Inventory.UI.Presenters
             }
 
             return true;
+        }
+
+        private void AppendRequirementStats(ItemDefinition definition, List<ItemDetailStat> stats)
+        {
+            int requiredLevel = 0;
+            AttributeRequirement[] requiredAttributes = null;
+
+            if (definition.HasWeaponData)
+            {
+                requiredLevel = definition.WeaponPayload.RequiredCharacterLevel;
+                requiredAttributes = definition.WeaponPayload.RequiredAttributes;
+            }
+            else if (definition.HasArmorData)
+            {
+                requiredAttributes = definition.ArmorPayload.AttributeRequirements;
+            }
+
+            bool hasLevelRequirement = requiredLevel > 0;
+            bool hasAttributeRequirements = requiredAttributes != null && requiredAttributes.Length > 0;
+
+            if (!hasLevelRequirement && !hasAttributeRequirements)
+            {
+                return;
+            }
+
+            if (hasLevelRequirement)
+            {
+                bool metLevel = _statModifiers == null || _statModifiers.GetCharacterLevel() >= requiredLevel;
+                stats.Add(new ItemDetailStat("stat.required_level", requiredLevel.ToString(), null, !metLevel));
+            }
+
+            if (hasAttributeRequirements)
+            {
+                foreach (AttributeRequirement requirement in requiredAttributes)
+                {
+                    bool met = _statModifiers == null || _statModifiers.GetAttributeValue(requirement.attributeId) >= requirement.minimumValue;
+                    stats.Add(new ItemDetailStat("stat.required_" + requirement.attributeId, requirement.minimumValue.ToString("0.#"), null, !met));
+                }
+            }
         }
 
         private ItemInstance FindInstanceAnywhere(string instanceId)

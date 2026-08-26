@@ -48,7 +48,9 @@ MonoBehaviour:
     criticalMultiplier: 1.5
     canBlock: 0
     requiredCharacterLevel: 5
-    requiredAttributes: []
+    requiredAttributes:
+    - attributeId: Strength
+      minimumValue: 50
     weaponPrefabOverride: {fileID: 0}
     animationSetId: 
     projectileDefinition:

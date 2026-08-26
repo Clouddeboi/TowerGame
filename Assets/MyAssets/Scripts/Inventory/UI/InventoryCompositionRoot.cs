@@ -144,7 +144,7 @@ namespace Game.Inventory.UI
                 PlayerInventoryService, EquipmentService, new EquipmentValidationService(), Loadout,
                 QuickSlotService, QuickSlots, ItemUseService, itemDatabase, equipmentSlots);
 
-            _tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, localization);
+            _tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, localization, PlayerStats);
             _errorFeedbackPresenter = new ErrorFeedbackPresenter(localization, Events);
 
             _dragDropController = new DragDropController(PlayerInventoryService, EquipmentService, QuickSlotService, itemDatabase);
@@ -162,7 +162,7 @@ namespace Game.Inventory.UI
             var entryList = inventoryScreenView.GetComponentInChildren<Entries.PooledEntryList>();
             Debug.Log($"entryList found: {entryList != null}");
 
-            var tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, new PassthroughLocalizationTextProvider());
+            var tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, new PassthroughLocalizationTextProvider(), PlayerStats);
             tooltipDelayController.Initialize(tooltipPresenter, tooltipView);
 
             if (entryList != null)

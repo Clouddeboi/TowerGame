@@ -1,5 +1,6 @@
 using Game.Inventory.Containers;
 using Game.Inventory.Definitions;
+using Game.Inventory.Definitions.Payloads;
 using Game.Inventory.Equipment;
 using Game.Inventory.Instances;
 using Game.Inventory.Interfaces;
@@ -16,13 +17,15 @@ namespace Game.Inventory.UI.Tooltips
         private readonly EquipmentLoadout _loadout;
         private readonly ItemDatabase _database;
         private readonly ILocalizationTextProvider _localization;
+        private readonly IStatModifierPort _statModifiers;
 
-        public TooltipPresenter(InventoryService inventoryService, EquipmentLoadout loadout, ItemDatabase database, ILocalizationTextProvider localization)
+        public TooltipPresenter(InventoryService inventoryService, EquipmentLoadout loadout, ItemDatabase database, ILocalizationTextProvider localization, IStatModifierPort statModifiers)
         {
             _inventoryService = inventoryService;
             _loadout = loadout;
             _database = database;
             _localization = localization;
+            _statModifiers = statModifiers;
         }
 
         public bool TryBuild(string instanceId, out TooltipData data)
@@ -37,6 +40,7 @@ namespace Game.Inventory.UI.Tooltips
 
             string rarityName = definition.Rarity != null ? _localization.Resolve(definition.Rarity.DisplayNameKey) : string.Empty;
             Color rarityColor = definition.Rarity != null ? definition.Rarity.UiColor : Color.white;
+            bool requirementsMet = CheckRequirements(definition);
 
             data = new TooltipData(
                 displayName: _localization.Resolve(definition.DisplayNameKey),
@@ -44,7 +48,47 @@ namespace Game.Inventory.UI.Tooltips
                 rarityColor: rarityColor,
                 shortDescription: _localization.Resolve(definition.DescriptionKey),
                 weight: definition.Weight * instance.Quantity,
-                value: definition.BaseValue * instance.Quantity);
+                value: definition.BaseValue * instance.Quantity,
+                requirementsMet: requirementsMet);
+
+            return true;
+        }
+
+        private bool CheckRequirements(ItemDefinition definition)
+        {
+            if (_statModifiers == null)
+            {
+                return true;
+            }
+
+            int requiredLevel = 0;
+            AttributeRequirement[] requiredAttributes = null;
+
+            if (definition.HasWeaponData)
+            {
+                requiredLevel = definition.WeaponPayload.RequiredCharacterLevel;
+                requiredAttributes = definition.WeaponPayload.RequiredAttributes;
+            }
+            else if (definition.HasArmorData)
+            {
+                requiredAttributes = definition.ArmorPayload.AttributeRequirements;
+            }
+
+            if (requiredLevel > 0 && _statModifiers.GetCharacterLevel() < requiredLevel)
+            {
+                return false;
+            }
+
+            if (requiredAttributes != null)
+            {
+                foreach (AttributeRequirement requirement in requiredAttributes)
+                {
+                    if (_statModifiers.GetAttributeValue(requirement.attributeId) < requirement.minimumValue)
+                    {
+                        return false;
+                    }
+                }
+            }
 
             return true;
         }

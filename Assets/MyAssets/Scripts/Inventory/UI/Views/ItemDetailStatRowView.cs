@@ -32,6 +32,7 @@ namespace Game.Inventory.UI.Views
             if (valueText != null)
             {
                 valueText.text = stat.valueText;
+                valueText.color = stat.isUnmetRequirement ? negativeDeltaColor : Color.white;
             }
 
             if (deltaText == null)

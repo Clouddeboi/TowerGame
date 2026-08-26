@@ -8,12 +8,14 @@ namespace Game.Inventory.UI.Presenters
         public readonly string labelKey;
         public readonly string valueText;
         public readonly float? comparisonDelta;
+        public readonly bool isUnmetRequirement;
 
-        public ItemDetailStat(string labelKey, string valueText, float? comparisonDelta)
+        public ItemDetailStat(string labelKey, string valueText, float? comparisonDelta, bool isUnmetRequirement = false)
         {
             this.labelKey = labelKey;
             this.valueText = valueText;
             this.comparisonDelta = comparisonDelta;
+            this.isUnmetRequirement = isUnmetRequirement;
         }
     }
 }

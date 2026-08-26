@@ -25,6 +25,9 @@ namespace Game.Inventory.UI.Tooltips
         [SerializeField]
         private TMP_Text weightValueText;
 
+        [SerializeField]
+        private TMP_Text requirementsWarningText;
+
         public void Show(TooltipData data, Vector2 screenPosition)
         {
             if (rootPanel != null)
@@ -51,6 +54,12 @@ namespace Game.Inventory.UI.Tooltips
             if (weightValueText != null)
             {
                 weightValueText.text = $"{data.weight:0.#} kg   {data.value} g";
+
+            if (requirementsWarningText != null)
+            {
+                requirementsWarningText.gameObject.SetActive(!data.requirementsMet);
+                requirementsWarningText.text = "Requirements not met";
+            }
             }
 
             if (rootRectTransform != null)
