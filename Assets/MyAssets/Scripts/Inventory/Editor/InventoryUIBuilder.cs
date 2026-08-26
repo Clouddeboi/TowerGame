@@ -10,11 +10,13 @@ using Game.Inventory.UI.Screens;
 using Game.Inventory.UI.Tooltips;
 using Game.Inventory.UI.Views;
 using Game.Inventory.QuickSlots;
+using Game.Inventory.Player;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Game.Inventory.UI.DragAndDrop;
+using UnityEngine.InputSystem;
 
 namespace Game.Inventory.Editor
 {
@@ -38,7 +40,7 @@ namespace Game.Inventory.Editor
             InventoryEntryView entryPrefab = BuildInventoryEntryPrefab();
             ContextMenuActionButtonView actionButtonPrefab = BuildContextMenuActionButtonPrefab();
             ItemDetailStatRowView statRowPrefab = BuildItemDetailStatRowPrefab();
-
+            
             Canvas canvas = FindOrCreateCanvas();
             EventSystemGuard.EnsureExists();
 
@@ -167,7 +169,7 @@ namespace Game.Inventory.Editor
             AssignField(tabView, "equipmentPanel", equipmentTabPanel);
             AssignField(tabView, "playerStatsPanel", playerStatsPanel);
             AssignField(tabView, "settingsPanel", settingsPanel);
-            
+                        
             // ---------- floating/overlay elements ----------
 
             GameObject contextMenuGo = BuildContextMenu(canvas.transform, actionButtonPrefab, out ItemContextMenuView contextMenuView);
@@ -222,6 +224,8 @@ namespace Game.Inventory.Editor
             AssignField(compositionRoot, "quickSlotInputBridge", inputBridge);
             AssignField(compositionRoot, "playerStatsView", playerStatsView);
             AssignField(compositionRoot, "tooltipDelayController", tooltipDelayController);
+            AssignField(compositionRoot, "gameplayInputPortBehaviour", FindOrCreateGameplayInputAdapter());
+            AssignField(compositionRoot, "cursorStatePortBehaviour", FindOrCreateCursorAdapter());
 
             EditorUtility.SetDirty(compositionRoot);
             EditorUtility.SetDirty(inventoryScreenView);
@@ -269,14 +273,62 @@ namespace Game.Inventory.Editor
         private static QuickSlotInputBridge FindOrCreateQuickSlotInputBridge()
         {
             GameObject existing = GameObject.Find(QuickSlotInputHandlerName);
+            QuickSlotInputBridge bridge;
+
             if (existing != null)
             {
-                QuickSlotInputBridge bridge = existing.GetComponent<QuickSlotInputBridge>();
-                return bridge != null ? bridge : existing.AddComponent<QuickSlotInputBridge>();
+                bridge = existing.GetComponent<QuickSlotInputBridge>();
+                if (bridge == null) bridge = existing.AddComponent<QuickSlotInputBridge>();
+            }
+            else
+            {
+                var go = new GameObject(QuickSlotInputHandlerName);
+                bridge = go.AddComponent<QuickSlotInputBridge>();
             }
 
-            var go = new GameObject(QuickSlotInputHandlerName);
-            return go.AddComponent<QuickSlotInputBridge>();
+            InputActionAsset inputActions = LoadFirstAsset<InputActionAsset>();
+
+            if (inputActions != null)
+            {
+                AssignField(bridge, "inputActions", inputActions);
+                AssignField(bridge, "actionMapName", "QuickSlots");
+            }
+            else
+            {
+                Debug.LogWarning("[InventoryUIBuilder] No InputActionAsset found in the project — create one named 'QuickSlots' with UseSlot0..N actions and re-run the builder.");
+            }
+
+            return bridge;
+        }
+
+        private static MonoBehaviour FindOrCreateCursorAdapter()
+        {
+            GameObject existing = GameObject.Find("CursorStateAdapter");
+            if (existing != null)
+            {
+                MonoBehaviour adapter = existing.GetComponent<MonoBehaviour>();
+                return adapter != null ? adapter : existing.AddComponent<TransformPlaceholderBehaviour>();
+            }
+
+            var go = new GameObject("CursorStateAdapter");
+            Debug.LogWarning("[InventoryUIBuilder] CursorStateAdapter is unavailable; created a placeholder behaviour. Assign a cursor-state adapter manually on InventoryCompositionRoot.");
+            return go.AddComponent<TransformPlaceholderBehaviour>();
+        }
+
+        private sealed class TransformPlaceholderBehaviour : MonoBehaviour { }
+
+        private static MonoBehaviour FindOrCreateGameplayInputAdapter()
+        {
+            GameObject existing = GameObject.Find("PlayerGameplayInputAdapter");
+            if (existing != null)
+            {
+                MonoBehaviour adapter = existing.GetComponent<MonoBehaviour>();
+                return adapter != null ? adapter : existing.AddComponent<TransformPlaceholderBehaviour>();
+            }
+
+            var go = new GameObject("PlayerGameplayInputAdapter");
+            Debug.LogWarning("[InventoryUIBuilder] Created a placeholder PlayerGameplayInputAdapter behaviour. Assign your gameplay input adapter manually on InventoryCompositionRoot.");
+            return go.AddComponent<TransformPlaceholderBehaviour>();
         }
 
         // ---------- Prefabs ----------

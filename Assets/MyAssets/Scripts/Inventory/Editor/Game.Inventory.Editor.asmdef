@@ -4,6 +4,7 @@
     "references": [
         "Game.Inventory.Runtime",
         "Game.Inventory.UI",
+        "Game.Inventory.Player",
         "Unity.TextMeshPro",
         "Unity.InputSystem"
     ],
