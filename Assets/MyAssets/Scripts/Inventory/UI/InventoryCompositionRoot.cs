@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 using Game.Inventory.Config;
 using Game.Inventory.Containers;
 using Game.Inventory.Definitions;
@@ -74,6 +75,25 @@ namespace Game.Inventory.UI
 
         [SerializeField] private Tooltips.TooltipDelayController tooltipDelayController;
 
+        //[SerializeField] private Screens.TransferScreenView transferScreenView;
+        [SerializeField] private Screens.ContainerScreenView containerScreenView;
+        [SerializeField] private Screens.RightColumnTabView tabView;
+        [SerializeField] private GameObject tabBarGameObject;
+        [SerializeField] private GameObject tabContentAreaGameObject;
+
+        public ContainerContext PlayerContainerContext { get; private set; }
+        public ContainerContext ChestContainerContext { get; private set; }
+        private TransferService _transferService;
+        private TransferScreenPresenter _transferScreenPresenter;
+
+        private void Update()
+        {
+            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                ToggleTransferScreen();
+            }
+        }
+
         private void Awake()
         {
             BuildServices();
@@ -114,6 +134,14 @@ namespace Game.Inventory.UI
             ModeController = new InventoryModeController(inventoryModeConfig, gameplayInput, cursorState);
 
             ConfirmationService = new ConfirmationService();
+
+            PlayerContainerContext = new ContainerContext("player", "container.player", playerContainer, PlayerInventoryService);
+
+            var chestContainer = new InventoryContainer();
+            var chestService = new InventoryService(chestContainer, itemDatabase, new ItemInstanceFactory(), Events);
+            ChestContainerContext = new ContainerContext("test_chest", "container.chest", chestContainer, chestService);
+
+            _transferService = new TransferService(itemDatabase, Events);
         }
 
         private void BuildPresenters()
@@ -123,6 +151,10 @@ namespace Game.Inventory.UI
             var inventoryView = new InventoryView(PlayerInventoryService.Container, itemDatabase);
 
             var displayedEquipmentSlots = equipmentSlots.FindAll(s => s.SlotId != "TwoHanded");
+
+
+            var transferInventoryView = new InventoryView(ChestContainerContext.container, itemDatabase);
+            var playerInventoryViewForTransfer = new InventoryView(PlayerInventoryService.Container, itemDatabase);
 
             _inventoryScreenPresenter = new InventoryScreenPresenter(
                 PlayerInventoryService, inventoryView, itemDatabase, displayDataBuilder,
@@ -148,6 +180,15 @@ namespace Game.Inventory.UI
             _errorFeedbackPresenter = new ErrorFeedbackPresenter(localization, Events);
 
             _dragDropController = new DragDropController(PlayerInventoryService, EquipmentService, QuickSlotService, itemDatabase);
+
+            _transferScreenPresenter = new TransferScreenPresenter(
+                PlayerContainerContext,
+                ChestContainerContext,
+                playerInventoryViewForTransfer,
+                transferInventoryView,
+                displayDataBuilder,
+                _transferService,
+                Events);
         }
 
         private void WireViews()
@@ -291,10 +332,32 @@ namespace Game.Inventory.UI
                 quickSlotViews[i].HoverEnded += () => tooltipDelayController.CancelShow();
             }
 
+            var containerEntryList = containerScreenView.EntryList;
+
+            containerEntryList.SetHoverHandler(
+                (instanceId, screenPos) => tooltipDelayController.RequestShow(instanceId, screenPos),
+                () => tooltipDelayController.CancelShow());
+
+            containerEntryList.SetContextMenuHandler((instanceId, screenPos) =>
+            {
+                var actions = _contextMenuPresenter.BuildActions(instanceId);
+                contextMenuView.Show(instanceId, actions);
+
+                var rt = contextMenuView.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.position = screenPos;
+                }
+            });
+
+            containerEntryList.SetDragCoordinator(dragCoordinator);
+
             confirmationDialogView.Initialize(ConfirmationService);
             _errorFeedbackPresenter.ErrorMessageRaised += errorToastView.ShowMessage;
 
             quickSlotInputBridge.Initialize(QuickSlotService, _playerUsageContext);
+            containerScreenView.Initialize(_transferScreenPresenter);
+            containerScreenView.CloseRequested += CloseTransferScreen;
 
             _inventoryScreenPresenter.Bind();
             _itemDetailsPresenter.Bind();
@@ -384,6 +447,40 @@ namespace Game.Inventory.UI
             }
         }
 
+        public void OpenTransferScreen()
+        {
+            ModeController.EnterInventoryMode();
+            inventoryScreenView.Open();
+            tabBarGameObject.SetActive(false);
+            tabContentAreaGameObject.SetActive(false);
+            containerScreenView.Open();
+        }
+
+        public void CloseTransferScreen()
+        {
+            containerScreenView.Close();
+            tabBarGameObject.SetActive(true);
+            tabContentAreaGameObject.SetActive(true);
+            inventoryScreenView.Close();
+            ModeController.ExitInventoryMode();
+        }
+
+        private bool _transferScreenIsOpen;
+
+        public void ToggleTransferScreen()
+        {
+            _transferScreenIsOpen = !_transferScreenIsOpen;
+
+            if (_transferScreenIsOpen)
+            {
+                OpenTransferScreen();
+            }
+            else
+            {
+                CloseTransferScreen();
+            }
+        }
+
         [ContextMenu("Debug: Add Test Items")]
         private void DebugAddTestItems()
         {
@@ -401,6 +498,14 @@ namespace Game.Inventory.UI
 
             Debug.Log($"Container now has {PlayerInventoryService.Container.EntryCount} entries");
             Debug.Log($"Presenter display list has {_inventoryScreenPresenter.BuildDisplayList().Count} items");
+        }
+
+        [ContextMenu("Debug: Seed Test Chest")]
+        private void DebugSeedTestChest()
+        {
+            ChestContainerContext.service.AddItem(new Core.ItemId("potion_health_01"), 3);
+            ChestContainerContext.service.AddItem(new Core.ItemId("quest_amulet_kings_01"), 1);
+            Debug.Log($"Chest now has {ChestContainerContext.container.EntryCount} entries.");
         }
     }
 }

@@ -187,6 +187,10 @@ namespace Game.Inventory.Editor
             BuildDragGhost(canvas.transform, out DragGhostView dragGhostView);
             dragGhostView.transform.SetAsLastSibling();
 
+            GameObject containerScreenPanelGo = BuildContainerScreenPanel(rightColumnRoot.transform, entryPrefab, out ContainerScreenView containerScreenView);
+            SetAnchoredBox(containerScreenPanelGo, new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+            containerScreenPanelGo.transform.SetAsLastSibling();
+
             // ---------- InventoryScreenView wiring ----------
 
             QuickSlotInputBridge inputBridge = FindOrCreateQuickSlotInputBridge();
@@ -226,13 +230,74 @@ namespace Game.Inventory.Editor
             AssignField(compositionRoot, "tooltipDelayController", tooltipDelayController);
             AssignField(compositionRoot, "gameplayInputPortBehaviour", FindOrCreateGameplayInputAdapter());
             AssignField(compositionRoot, "cursorStatePortBehaviour", FindOrCreateCursorAdapter());
-
+            AssignField(compositionRoot, "transferScreenView", transferScreenView);
+            AssignField(compositionRoot, "containerScreenView", containerScreenView);
+            //AssignField(compositionRoot, "tabView", tabView);
+            AssignField(compositionRoot, "tabBarGameObject", tabBar);
+            AssignField(compositionRoot, "tabContentAreaGameObject", tabContentArea);
+            
             EditorUtility.SetDirty(compositionRoot);
             EditorUtility.SetDirty(inventoryScreenView);
 
             Debug.Log("[InventoryUIBuilder] Inventory UI build complete. Review the InventoryCompositionRoot Inspector for any fields you still need to assign manually (gameplay input/cursor adapters).");
 
             Selection.activeGameObject = compositionRoot.gameObject;
+        }
+
+        private static GameObject BuildContainerScreenPanel(Transform parent, InventoryEntryView entryPrefab, out ContainerScreenView view)
+        {
+            GameObject panel = FindOrCreateChild(parent, "ContainerScreenPanel", typeof(Image));
+            SetStretch(panel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            panel.GetComponent<Image>().color = new Color(0.06f, 0.06f, 0.08f, 0.9f);
+
+            TMP_Text titleText = CreateTmpChild(panel.transform, "TitleText", 16f, TextAlignmentOptions.MidlineLeft);
+            var titleRt = titleText.GetComponent<RectTransform>();
+            titleRt.anchorMin = new Vector2(0f, 0.94f);
+            titleRt.anchorMax = new Vector2(0.8f, 1f);
+            titleRt.offsetMin = new Vector2(8f, 0f);
+            titleRt.offsetMax = Vector2.zero;
+
+            GameObject closeButtonGo = CreateChild(panel.transform, "CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            var closeRt = closeButtonGo.GetComponent<RectTransform>();
+            closeRt.anchorMin = new Vector2(0.88f, 0.94f);
+            closeRt.anchorMax = new Vector2(0.98f, 1f);
+            closeRt.offsetMin = Vector2.zero;
+            closeRt.offsetMax = Vector2.zero;
+            closeButtonGo.GetComponent<Image>().color = new Color(0.5f, 0.15f, 0.15f);
+            TMP_Text closeText = CreateTmpChild(closeButtonGo.transform, "Text", 14f, TextAlignmentOptions.Center);
+            closeText.text = "X";
+            SetStretch(closeText.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+
+            GameObject scrollViewGo = BuildScrollView(panel.transform, entryPrefab, out PooledEntryList pooledList);
+            SetAnchoredBox(scrollViewGo, new Vector2(0f, 0.15f), new Vector2(1f, 0.93f), Vector2.zero, Vector2.zero);
+
+            GameObject buttonRow = FindOrCreateChild(panel.transform, "TransferButtonRow", typeof(HorizontalLayoutGroup));
+            SetAnchoredBox(buttonRow, new Vector2(0f, 0f), new Vector2(1f, 0.14f), Vector2.zero, Vector2.zero);
+            var hlg = buttonRow.GetComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 4f;
+            hlg.padding = new RectOffset(4, 4, 4, 4);
+            hlg.childControlWidth = true;
+            hlg.childForceExpandWidth = true;
+
+            GameObject transferOneBtn = CreateButtonWithLabel(buttonRow.transform, "TransferOneButton", "Take 1");
+            GameObject transferStackBtn = CreateButtonWithLabel(buttonRow.transform, "TransferStackButton", "Take Stack");
+            GameObject takeAllBtn = CreateButtonWithLabel(buttonRow.transform, "TakeAllButton", "Take All");
+            GameObject storeAllBtn = CreateButtonWithLabel(buttonRow.transform, "StoreAllButton", "Store All");
+
+            view = panel.GetComponent<ContainerScreenView>();
+            if (view == null) view = panel.AddComponent<ContainerScreenView>();
+
+            AssignField(view, "rootPanel", panel);
+            AssignField(view, "titleText", titleText);
+            AssignField(view, "entryList", pooledList);
+            AssignField(view, "transferOneButton", transferOneBtn.GetComponent<Button>());
+            AssignField(view, "transferStackButton", transferStackBtn.GetComponent<Button>());
+            AssignField(view, "takeAllButton", takeAllBtn.GetComponent<Button>());
+            AssignField(view, "storeAllButton", storeAllBtn.GetComponent<Button>());
+            AssignField(view, "closeButton", closeButtonGo.GetComponent<Button>());
+
+            panel.SetActive(false);
+            return panel;
         }
 
         // ---------- Canvas / roots ----------
