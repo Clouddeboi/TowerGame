@@ -15,29 +15,21 @@ namespace Game.Inventory.UI.DragAndDrop
         private readonly EquipmentService _equipmentService;
         private readonly QuickSlotService _quickSlotService;
         private readonly ItemDatabase _database;
-        private readonly InventoryService _secondaryInventoryService;
-        private readonly TransferService _transferService;
-        private readonly ContainerContext _primaryContext;
-        private readonly ContainerContext _secondaryContext;
+        private InventoryService _secondaryInventoryService;
+        private TransferService _transferService;
+        private ContainerContext _primaryContext;
+        private ContainerContext _secondaryContext;
 
         public DragDropController(
             InventoryService primaryInventoryService,
             EquipmentService equipmentService,
             QuickSlotService quickSlotService,
-            ItemDatabase database,
-            InventoryService secondaryInventoryService = null,
-            TransferService transferService = null,
-            ContainerContext primaryContext = null,
-            ContainerContext secondaryContext = null)
+            ItemDatabase database)
         {
             _primaryInventoryService = primaryInventoryService;
             _equipmentService = equipmentService;
             _quickSlotService = quickSlotService;
             _database = database;
-            _secondaryInventoryService = secondaryInventoryService;
-            _transferService = transferService;
-            _primaryContext = primaryContext;
-            _secondaryContext = secondaryContext;
         }
 
         public bool CanDrop(DragPayload payload, DropTarget target)
@@ -248,6 +240,22 @@ namespace Game.Inventory.UI.DragAndDrop
             }
 
             return null;
+        }
+
+        public void SetActiveContainer(InventoryService secondaryInventoryService, TransferService transferService, ContainerContext primaryContext, ContainerContext secondaryContext)
+        {
+            _secondaryInventoryService = secondaryInventoryService;
+            _transferService = transferService;
+            _primaryContext = primaryContext;
+            _secondaryContext = secondaryContext;
+        }
+
+        public void ClearActiveContainer()
+        {
+            _secondaryInventoryService = null;
+            _transferService = null;
+            _primaryContext = null;
+            _secondaryContext = null;
         }
     }
 }

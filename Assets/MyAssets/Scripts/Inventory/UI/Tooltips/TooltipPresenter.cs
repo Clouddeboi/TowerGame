@@ -14,7 +14,7 @@ namespace Game.Inventory.UI.Tooltips
     public class TooltipPresenter
     {
         private readonly InventoryService _primaryInventoryService;
-        private readonly InventoryService _secondaryInventoryService;
+        private InventoryService _secondaryInventoryService;
         private readonly EquipmentLoadout _loadout;
         private readonly ItemDatabase _database;
         private readonly ILocalizationTextProvider _localization;
@@ -25,11 +25,9 @@ namespace Game.Inventory.UI.Tooltips
             EquipmentLoadout loadout,
             ItemDatabase database,
             ILocalizationTextProvider localization,
-            IStatModifierPort statModifiers,
-            InventoryService secondaryInventoryService = null)
+            IStatModifierPort statModifiers)
         {
             _primaryInventoryService = primaryInventoryService;
-            _secondaryInventoryService = secondaryInventoryService;
             _loadout = loadout;
             _database = database;
             _localization = localization;
@@ -131,6 +129,16 @@ namespace Game.Inventory.UI.Tooltips
             }
 
             return null;
+        }
+
+        public void SetActiveContainer(InventoryService secondaryInventoryService)
+        {
+            _secondaryInventoryService = secondaryInventoryService;
+        }
+
+        public void ClearActiveContainer()
+        {
+            _secondaryInventoryService = null;
         }
     }
 }

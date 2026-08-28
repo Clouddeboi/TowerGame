@@ -23,7 +23,7 @@ namespace Game.Inventory.UI.Presenters
         private readonly ILocalizationTextProvider _localization;
         private readonly IStatModifierPort _statModifiers;
         private readonly InventoryService _primaryInventoryService;
-        private readonly InventoryService _secondaryInventoryService;
+        private InventoryService _secondaryInventoryService;
 
         private string _selectedInstanceId;
 
@@ -34,11 +34,9 @@ namespace Game.Inventory.UI.Presenters
             EquipmentLoadout loadout,
             ILocalizationTextProvider localization,
             IStatModifierPort statModifiers,
-            InventoryEventChannel events,
-            InventoryService secondaryInventoryService = null) : base(events)
+            InventoryEventChannel events) : base(events)
         {
             _primaryInventoryService = primaryInventoryService;
-            _secondaryInventoryService = secondaryInventoryService;
             _database = database;
             _displayDataBuilder = displayDataBuilder;
             _loadout = loadout;
@@ -347,6 +345,16 @@ namespace Game.Inventory.UI.Presenters
             events.InventoryChanged -= OnInventoryChanged;
             events.ItemEquipped -= OnItemEquipped;
             events.ItemUnequipped -= OnItemUnequipped;
+        }
+
+        public void SetActiveContainer(InventoryService secondaryInventoryService)
+        {
+            _secondaryInventoryService = secondaryInventoryService;
+        }
+
+        public void ClearActiveContainer()
+        {
+            _secondaryInventoryService = null;
         }
 
         private void OnInventoryChanged(InventoryChangedEvent payload) => DetailsInvalidated?.Invoke();

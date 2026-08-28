@@ -29,10 +29,10 @@ namespace Game.Inventory.UI.Presenters
         private readonly ItemDatabase _database;
         private readonly IReadOnlyList<EquipmentSlotDefinition> _knownSlots;
         private readonly InventoryService _primaryInventoryService;
-        private readonly InventoryService _secondaryInventoryService;
-        private readonly TransferService _transferService;
-        private readonly ContainerContext _primaryContext;
-        private readonly ContainerContext _secondaryContext;
+        private InventoryService _secondaryInventoryService;
+        private TransferService _transferService;
+        private ContainerContext _primaryContext;
+        private ContainerContext _secondaryContext;
 
         public ItemContextMenuPresenter(
             InventoryService primaryInventoryService,
@@ -43,14 +43,9 @@ namespace Game.Inventory.UI.Presenters
             QuickSlotCollection quickSlots,
             ItemUseService itemUseService,
             ItemDatabase database,
-            IReadOnlyList<EquipmentSlotDefinition> knownSlots,
-            InventoryService secondaryInventoryService,
-            TransferService transferService,
-            ContainerContext primaryContext,
-            ContainerContext secondaryContext)
+            IReadOnlyList<EquipmentSlotDefinition> knownSlots)
         {
             _primaryInventoryService = primaryInventoryService;
-            _secondaryInventoryService = secondaryInventoryService;
             _equipmentService = equipmentService;
             _equipmentValidationService = equipmentValidationService;
             _loadout = loadout;
@@ -59,9 +54,6 @@ namespace Game.Inventory.UI.Presenters
             _itemUseService = itemUseService;
             _database = database;
             _knownSlots = knownSlots;
-            _transferService = transferService;
-            _primaryContext = primaryContext;
-            _secondaryContext = secondaryContext;
         }
 
         private EquipmentSlotDefinition FindKnownSlotById(string slotId)
@@ -432,6 +424,25 @@ namespace Game.Inventory.UI.Presenters
             }
 
             return _primaryInventoryService;
+        }
+
+        // called when a container is opened/closed - while null, no Transfer action is
+        // offered and cross-container lookups (BuildActions/Execute) only see the player's
+        // own inventory, matching "no container open" state correctly
+        public void SetActiveContainer(InventoryService secondaryInventoryService, TransferService transferService, ContainerContext primaryContext, ContainerContext secondaryContext)
+        {
+            _secondaryInventoryService = secondaryInventoryService;
+            _transferService = transferService;
+            _primaryContext = primaryContext;
+            _secondaryContext = secondaryContext;
+        }
+
+        public void ClearActiveContainer()
+        {
+            _secondaryInventoryService = null;
+            _transferService = null;
+            _primaryContext = null;
+            _secondaryContext = null;
         }
     }
 }

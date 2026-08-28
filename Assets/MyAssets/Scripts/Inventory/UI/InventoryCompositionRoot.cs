@@ -162,7 +162,7 @@ namespace Game.Inventory.UI
 
             _itemDetailsPresenter = new ItemDetailsPresenter(
                 PlayerInventoryService, itemDatabase, displayDataBuilder, Loadout,
-                localization, PlayerStats, Events, ChestContainerContext.service);
+                localization, PlayerStats, Events);
 
             _playerStatsPresenter = new PlayerStatsPresenter(PlayerStats, Events);
 
@@ -174,15 +174,14 @@ namespace Game.Inventory.UI
 
             _contextMenuPresenter = new ItemContextMenuPresenter(
                 PlayerInventoryService, EquipmentService, new EquipmentValidationService(), Loadout,
-                QuickSlotService, QuickSlots, ItemUseService, itemDatabase, equipmentSlots,
-                ChestContainerContext.service, _transferService, PlayerContainerContext, ChestContainerContext);
+                QuickSlotService, QuickSlots, ItemUseService, itemDatabase, equipmentSlots);           
             
-            _tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, localization, PlayerStats, ChestContainerContext.service);
+            _tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, localization, PlayerStats);
+            
             _errorFeedbackPresenter = new ErrorFeedbackPresenter(localization, Events);
 
             _dragDropController = new DragDropController(
-                PlayerInventoryService, EquipmentService, QuickSlotService, itemDatabase,
-                ChestContainerContext.service, _transferService, PlayerContainerContext, ChestContainerContext);
+                PlayerInventoryService, EquipmentService, QuickSlotService, itemDatabase);
 
             _transferScreenPresenter = new TransferScreenPresenter(
                 PlayerContainerContext,
@@ -458,6 +457,11 @@ namespace Game.Inventory.UI
             tabBarGameObject.SetActive(false);
             tabContentAreaGameObject.SetActive(false);
             containerScreenView.Open();
+
+            _contextMenuPresenter.SetActiveContainer(ChestContainerContext.service, _transferService, PlayerContainerContext, ChestContainerContext);
+            _dragDropController.SetActiveContainer(ChestContainerContext.service, _transferService, PlayerContainerContext, ChestContainerContext);
+            _tooltipPresenter.SetActiveContainer(ChestContainerContext.service);
+            _itemDetailsPresenter.SetActiveContainer(ChestContainerContext.service);
         }
 
         public void CloseTransferScreen()
@@ -467,6 +471,11 @@ namespace Game.Inventory.UI
             tabContentAreaGameObject.SetActive(true);
             inventoryScreenView.Close();
             ModeController.ExitInventoryMode();
+
+            _contextMenuPresenter.ClearActiveContainer();
+            _dragDropController.ClearActiveContainer();
+            _tooltipPresenter.ClearActiveContainer();
+            _itemDetailsPresenter.ClearActiveContainer();
         }
 
         private bool _transferScreenIsOpen;
