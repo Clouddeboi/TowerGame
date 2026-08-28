@@ -27,12 +27,15 @@ namespace Game.Inventory.UI.DragAndDrop
 
         private string _draggingInstanceId;
 
+        private readonly PooledEntryList _primaryEntryList;
+
         public PointerDragCoordinator(
             DragDropController dragDropController,
             DragGhostView ghostView,
             IReadOnlyList<EquipmentSlotDefinition> knownSlots,
             InventoryService inventoryService,
             ItemDatabase database,
+            PooledEntryList primaryEntryList,
             System.Action<string> errorCallback)
         {
             _dragDropController = dragDropController;
@@ -40,6 +43,7 @@ namespace Game.Inventory.UI.DragAndDrop
             _knownSlots = knownSlots;
             _inventoryService = inventoryService;
             _database = database;
+            _primaryEntryList = primaryEntryList;
             _errorCallback = errorCallback;
         }
 
@@ -115,9 +119,23 @@ namespace Game.Inventory.UI.DragAndDrop
                     ReportIfFailed(result);
                     return;
                 }
-            }
 
-            //dropped on nothing recognized, no-op, item stays where it was
+                // landed on the container list itself but not a specific entry - still a
+                // full transfer into whichever container this list represents
+                PooledEntryList pooledList = hit.gameObject.GetComponentInParent<PooledEntryList>();
+
+                if (pooledList == null)
+                {
+                    pooledList = hit.gameObject.GetComponentInChildren<PooledEntryList>();
+                }
+
+                if (pooledList != null)
+                {
+                    DragDropResult result = _dragDropController.DropOntoContainer(payload, pooledList == _primaryEntryList);
+                    ReportIfFailed(result);
+                    return;
+                }
+            }
         }
 
         private void ReportIfFailed(DragDropResult result)

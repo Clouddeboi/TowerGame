@@ -56,6 +56,11 @@ namespace Game.Inventory.UI.Views
             if (rootPanel != null)
             {
                 rootPanel.SetActive(hasSelection);
+
+                if (hasSelection)
+                {
+                    rootPanel.transform.SetAsLastSibling();
+                }
             }
 
             if (!hasSelection)

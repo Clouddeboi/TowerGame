@@ -22,19 +22,23 @@ namespace Game.Inventory.UI.Presenters
         private readonly EquipmentLoadout _loadout;
         private readonly ILocalizationTextProvider _localization;
         private readonly IStatModifierPort _statModifiers;
+        private readonly InventoryService _primaryInventoryService;
+        private readonly InventoryService _secondaryInventoryService;
 
         private string _selectedInstanceId;
 
         public ItemDetailsPresenter(
-            InventoryService inventoryService,
+            InventoryService primaryInventoryService,
             ItemDatabase database,
             ItemDisplayDataBuilder displayDataBuilder,
             EquipmentLoadout loadout,
             ILocalizationTextProvider localization,
             IStatModifierPort statModifiers,
-            InventoryEventChannel events) : base(events)
+            InventoryEventChannel events,
+            InventoryService secondaryInventoryService = null) : base(events)
         {
-            _inventoryService = inventoryService;
+            _primaryInventoryService = primaryInventoryService;
+            _secondaryInventoryService = secondaryInventoryService;
             _database = database;
             _displayDataBuilder = displayDataBuilder;
             _loadout = loadout;
@@ -301,11 +305,22 @@ namespace Game.Inventory.UI.Presenters
 
         private ItemInstance FindInstanceAnywhere(string instanceId)
         {
-            foreach (InventoryEntry entry in _inventoryService.Container.Entries)
+            foreach (InventoryEntry entry in _primaryInventoryService.Container.Entries)
             {
                 if (entry.Instance.InstanceId.ToString() == instanceId)
                 {
                     return entry.Instance;
+                }
+            }
+
+            if (_secondaryInventoryService != null)
+            {
+                foreach (InventoryEntry entry in _secondaryInventoryService.Container.Entries)
+                {
+                    if (entry.Instance.InstanceId.ToString() == instanceId)
+                    {
+                        return entry.Instance;
+                    }
                 }
             }
 

@@ -162,7 +162,7 @@ namespace Game.Inventory.UI
 
             _itemDetailsPresenter = new ItemDetailsPresenter(
                 PlayerInventoryService, itemDatabase, displayDataBuilder, Loadout,
-                localization, PlayerStats, Events);
+                localization, PlayerStats, Events, ChestContainerContext.service);
 
             _playerStatsPresenter = new PlayerStatsPresenter(PlayerStats, Events);
 
@@ -175,12 +175,14 @@ namespace Game.Inventory.UI
             _contextMenuPresenter = new ItemContextMenuPresenter(
                 PlayerInventoryService, EquipmentService, new EquipmentValidationService(), Loadout,
                 QuickSlotService, QuickSlots, ItemUseService, itemDatabase, equipmentSlots,
-                ChestContainerContext.service);
+                ChestContainerContext.service, _transferService, PlayerContainerContext, ChestContainerContext);
             
             _tooltipPresenter = new Tooltips.TooltipPresenter(PlayerInventoryService, Loadout, itemDatabase, localization, PlayerStats, ChestContainerContext.service);
             _errorFeedbackPresenter = new ErrorFeedbackPresenter(localization, Events);
 
-            _dragDropController = new DragDropController(PlayerInventoryService, EquipmentService, QuickSlotService, itemDatabase);
+            _dragDropController = new DragDropController(
+                PlayerInventoryService, EquipmentService, QuickSlotService, itemDatabase,
+                ChestContainerContext.service, _transferService, PlayerContainerContext, ChestContainerContext);
 
             _transferScreenPresenter = new TransferScreenPresenter(
                 PlayerContainerContext,
@@ -220,6 +222,7 @@ namespace Game.Inventory.UI
                 equipmentSlots,
                 PlayerInventoryService,
                 itemDatabase,
+                entryList,
                 message => errorToastView.ShowMessage(message ?? "Action failed."));
 
             entryList?.SetDragCoordinator(dragCoordinator);

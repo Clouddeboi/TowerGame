@@ -30,6 +30,9 @@ namespace Game.Inventory.UI.Presenters
         private readonly IReadOnlyList<EquipmentSlotDefinition> _knownSlots;
         private readonly InventoryService _primaryInventoryService;
         private readonly InventoryService _secondaryInventoryService;
+        private readonly TransferService _transferService;
+        private readonly ContainerContext _primaryContext;
+        private readonly ContainerContext _secondaryContext;
 
         public ItemContextMenuPresenter(
             InventoryService primaryInventoryService,
@@ -41,7 +44,10 @@ namespace Game.Inventory.UI.Presenters
             ItemUseService itemUseService,
             ItemDatabase database,
             IReadOnlyList<EquipmentSlotDefinition> knownSlots,
-            InventoryService secondaryInventoryService = null)
+            InventoryService secondaryInventoryService,
+            TransferService transferService,
+            ContainerContext primaryContext,
+            ContainerContext secondaryContext)
         {
             _primaryInventoryService = primaryInventoryService;
             _secondaryInventoryService = secondaryInventoryService;
@@ -53,6 +59,9 @@ namespace Game.Inventory.UI.Presenters
             _itemUseService = itemUseService;
             _database = database;
             _knownSlots = knownSlots;
+            _transferService = transferService;
+            _primaryContext = primaryContext;
+            _secondaryContext = secondaryContext;
         }
 
         private EquipmentSlotDefinition FindKnownSlotById(string slotId)
@@ -79,37 +88,39 @@ namespace Game.Inventory.UI.Presenters
                 return actions;
             }
 
+            bool belongsToPrimary = BelongsToPrimary(instanceId);
             bool isEquipped = IsEquipped(instance);
-            bool isAssignedToQuickSlot = IsAssignedToQuickSlot(instance.DefinitionId);
+            bool isAssignedToQuickSlot = belongsToPrimary && IsAssignedToQuickSlot(instance.DefinitionId);
             int quantity = instance.Quantity;
-            bool isFavorite = FindEntry(instanceId)?.IsFavorite ?? false;
+            InventoryEntry inventoryEntry = FindEntry(instanceId);
+            bool isFavorite = belongsToPrimary && (inventoryEntry?.IsFavorite ?? false);
 
-            if (definition.HasConsumableData)
+            if (belongsToPrimary && definition.HasConsumableData)
             {
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Use, "context.use"));
             }
 
-            if ((definition.HasWeaponData || definition.HasArmorData) && !isEquipped)
+            if (belongsToPrimary && (definition.HasWeaponData || definition.HasArmorData) && !isEquipped)
             {
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Equip, "context.equip"));
             }
 
-            if ((definition.HasWeaponData || definition.HasArmorData) && isEquipped)
+            if (belongsToPrimary && (definition.HasWeaponData || definition.HasArmorData) && isEquipped)
             {
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Unequip, "context.unequip"));
             }
 
-            if (definition.CanBeAssignedToQuickSlot && !isAssignedToQuickSlot)
+            if (belongsToPrimary && definition.CanBeAssignedToQuickSlot && !isAssignedToQuickSlot)
             {
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.AssignToQuickSlot, "context.assign_quick_slot"));
             }
 
-            if (definition.CanBeAssignedToQuickSlot && isAssignedToQuickSlot)
+            if (belongsToPrimary && definition.CanBeAssignedToQuickSlot && isAssignedToQuickSlot)
             {
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.RemoveFromQuickSlot, "context.remove_quick_slot"));
             }
 
-            if (quantity > 1)
+            if (inventoryEntry != null && quantity > 1)
             {
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.SplitStack, "context.split_stack"));
             }
@@ -121,13 +132,9 @@ namespace Game.Inventory.UI.Presenters
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Compare, "context.compare"));
             }
 
-            bool hasInventoryEntry = FindEntry(instanceId) != null;
-
-            InventoryEntry inventoryEntry = FindEntry(instanceId);
-
-            if (inventoryEntry != null)
+            if (belongsToPrimary)
             {
-                actions.Add(inventoryEntry.IsFavorite
+                actions.Add(isFavorite
                     ? ContextMenuActionData.Available(ContextMenuActionKind.Unfavorite, "context.unfavorite")
                     : ContextMenuActionData.Available(ContextMenuActionKind.Favorite, "context.favorite"));
             }
@@ -137,7 +144,10 @@ namespace Game.Inventory.UI.Presenters
                 actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Drop, "context.drop"));
             }
 
-            actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Transfer, "context.transfer"));
+            if (_secondaryInventoryService != null)
+            {
+                actions.Add(ContextMenuActionData.Available(ContextMenuActionKind.Transfer, "context.transfer"));
+            }
 
             if (definition.IsQuestItem && definition.HasQuestItemData && !definition.QuestItemPayload.CanBeRemoved)
             {
@@ -200,6 +210,10 @@ namespace Game.Inventory.UI.Presenters
 
                 case ContextMenuActionKind.Destroy:
                     ResolveOwningService(instanceId).RemoveInstance(typedInstanceId);
+                    break;
+
+                case ContextMenuActionKind.Transfer:
+                    ExecuteTransfer(instance);
                     break;
 
                 default:
@@ -292,6 +306,19 @@ namespace Game.Inventory.UI.Presenters
             }
         }
 
+        private bool BelongsToPrimary(string instanceId)
+        {
+            foreach (InventoryEntry entry in _primaryInventoryService.Container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == instanceId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool IsEquipped(ItemInstance instance)
         {
             foreach (var kvp in _loadout.EquippedBySlot)
@@ -303,6 +330,25 @@ namespace Game.Inventory.UI.Presenters
             }
 
             return false;
+        }
+
+        private void ExecuteTransfer(ItemInstance instance)
+        {
+            if (_transferService == null || _primaryContext == null || _secondaryContext == null)
+            {
+                return;
+            }
+
+            bool fromPrimary = BelongsToPrimary(instance.InstanceId.ToString());
+
+            if (fromPrimary)
+            {
+                _transferService.TransferFullStack(_primaryContext, _secondaryContext, instance.DefinitionId);
+            }
+            else
+            {
+                _transferService.TransferFullStack(_secondaryContext, _primaryContext, instance.DefinitionId);
+            }
         }
 
         private bool IsAssignedToQuickSlot(Core.ItemId definitionId)

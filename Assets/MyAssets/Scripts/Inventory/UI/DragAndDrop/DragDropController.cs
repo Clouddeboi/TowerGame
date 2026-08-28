@@ -9,32 +9,37 @@ using Game.Inventory.QuickSlots;
 
 namespace Game.Inventory.UI.DragAndDrop
 {
-    //owns drag session validation and dispatch, every outcome here routes through the
-    //same services the context menu already calls, no duplicated business
-    //logic, this is purely a second way to trigger the same operations
-    //CanDrop is a cheap pre-check for visual feedback during drag, the eventual service
-    //call on Drop is the authoritative validation regardless of what CanDrop said
     public class DragDropController
     {
-        private readonly InventoryService _inventoryService;
+        private readonly InventoryService _primaryInventoryService;
         private readonly EquipmentService _equipmentService;
         private readonly QuickSlotService _quickSlotService;
         private readonly ItemDatabase _database;
+        private readonly InventoryService _secondaryInventoryService;
+        private readonly TransferService _transferService;
+        private readonly ContainerContext _primaryContext;
+        private readonly ContainerContext _secondaryContext;
 
         public DragDropController(
-            InventoryService inventoryService,
+            InventoryService primaryInventoryService,
             EquipmentService equipmentService,
             QuickSlotService quickSlotService,
-            ItemDatabase database)
+            ItemDatabase database,
+            InventoryService secondaryInventoryService = null,
+            TransferService transferService = null,
+            ContainerContext primaryContext = null,
+            ContainerContext secondaryContext = null)
         {
-            _inventoryService = inventoryService;
+            _primaryInventoryService = primaryInventoryService;
             _equipmentService = equipmentService;
             _quickSlotService = quickSlotService;
             _database = database;
+            _secondaryInventoryService = secondaryInventoryService;
+            _transferService = transferService;
+            _primaryContext = primaryContext;
+            _secondaryContext = secondaryContext;
         }
 
-        //cheap, non-mutating check used to highlight valid/invalid drop zones while
-        //a drag is in progress, does not guarantee the drop will succeed
         public bool CanDrop(DragPayload payload, DropTarget target)
         {
             InventoryEntry sourceEntry = FindEntryByInstanceId(payload.instanceId);
@@ -47,10 +52,10 @@ namespace Game.Inventory.UI.DragAndDrop
             switch (target.targetKind)
             {
                 case DropTargetKind.EquipmentSlot:
-                    return (definition.HasWeaponData || definition.HasArmorData) && payload.sourceKind != DragSourceKind.QuickSlot;
+                    return (definition.HasWeaponData || definition.HasArmorData) && payload.sourceKind != DragSourceKind.QuickSlot && BelongsToPrimary(payload.instanceId);
 
                 case DropTargetKind.QuickSlot:
-                    return definition.CanBeAssignedToQuickSlot;
+                    return definition.CanBeAssignedToQuickSlot && BelongsToPrimary(payload.instanceId);
 
                 case DropTargetKind.InventoryEntry:
                     return payload.sourceKind == DragSourceKind.InventoryEntry;
@@ -82,9 +87,6 @@ namespace Game.Inventory.UI.DragAndDrop
                     return DropIntoWorld(payload);
 
                 case DropTargetKind.EquipmentSlot:
-                    //equipment slot drops require a resolved EquipmentSlotDefinition asset, not
-                    //just an id string, views call DropOntoEquipmentSlot(payload, resolvedSlot)
-                    //directly instead of routing through this generic Drop entry point
                     return DragDropResult.Failure("dragdrop.equipment_requires_resolved_slot");
 
                 default:
@@ -92,27 +94,6 @@ namespace Game.Inventory.UI.DragAndDrop
             }
         }
 
-        private DragDropResult DropOntoEquipmentSlot(DragPayload payload, DropTarget target)
-        {
-            InventoryEntry sourceEntry = FindEntryByInstanceId(payload.instanceId);
-
-            if (sourceEntry == null)
-            {
-                return DragDropResult.Failure("dragdrop.source_not_found");
-            }
-
-            //resolving the string slot id back to an EquipmentSlotDefinition asset is a
-            //composition-root concern, the controller works with slot ids as strings so
-            //it never needs a direct reference to every EquipmentSlotDefinition asset,
-            //the caller (view/composition root) supplies the resolved asset instead via
-            //this overload
-            return DragDropResult.Failure("dragdrop.use_resolved_slot_overload");
-        }
-
-        //the actual equip drop needs a resolved EquipmentSlotDefinition, not just its id
-        //string, since EquipmentService.Equip requires the asset reference, this overload
-        //is what views actually call, having already resolved the slot id themselves
-        //against whatever slot list the composition root gave them
         public DragDropResult DropOntoEquipmentSlot(DragPayload payload, EquipmentSlotDefinition resolvedTargetSlot)
         {
             InventoryEntry sourceEntry = FindEntryByInstanceId(payload.instanceId);
@@ -155,19 +136,64 @@ namespace Game.Inventory.UI.DragAndDrop
                 return DragDropResult.Failure("dragdrop.source_not_found");
             }
 
+            bool sourceIsPrimary = BelongsToPrimary(payload.instanceId);
+            bool targetIsPrimary = BelongsToPrimary(target.targetInstanceId);
+
+            // dropping onto an entry in a different container is a transfer, not a merge
+            if (sourceIsPrimary != targetIsPrimary)
+            {
+                return TransferBetweenContainers(sourceEntry, sourceIsPrimary);
+            }
+
             if (sourceEntry.Instance.DefinitionId == targetEntry.Instance.DefinitionId)
             {
-                //same definition dragged onto another entry of itself, attempt a merge
-                var mergeResult = _inventoryService.MergeStacks(sourceEntry.Instance.InstanceId, targetEntry.Instance.InstanceId);
+                InventoryService owningService = sourceIsPrimary ? _primaryInventoryService : _secondaryInventoryService;
+                var mergeResult = owningService.MergeStacks(sourceEntry.Instance.InstanceId, targetEntry.Instance.InstanceId);
 
                 return mergeResult.succeeded
                     ? DragDropResult.Success()
                     : DragDropResult.Failure(mergeResult.failureReason.ToString());
             }
 
-            //dragging onto a different item entirely is a manual reorder, which
-            //InventoryContainer does not track ordering for beyond entry list order
             return DragDropResult.Failure("dragdrop.reorder_not_supported");
+        }
+
+        // called when a drop lands on the "empty space" of the opposite container's list
+        // (not on a specific entry) - still a full transfer of that item's stack
+        public DragDropResult DropOntoContainer(DragPayload payload, bool targetIsPrimary)
+        {
+            InventoryEntry sourceEntry = FindEntryByInstanceId(payload.instanceId);
+
+            if (sourceEntry == null)
+            {
+                return DragDropResult.Failure("dragdrop.source_not_found");
+            }
+
+            bool sourceIsPrimary = BelongsToPrimary(payload.instanceId);
+
+            if (sourceIsPrimary == targetIsPrimary)
+            {
+                return DragDropResult.Failure("dragdrop.same_container");
+            }
+
+            return TransferBetweenContainers(sourceEntry, sourceIsPrimary);
+        }
+
+        private DragDropResult TransferBetweenContainers(InventoryEntry sourceEntry, bool sourceIsPrimary)
+        {
+            if (_transferService == null || _primaryContext == null || _secondaryContext == null)
+            {
+                return DragDropResult.Failure("dragdrop.transfer_not_configured");
+            }
+
+            ContainerContext source = sourceIsPrimary ? _primaryContext : _secondaryContext;
+            ContainerContext destination = sourceIsPrimary ? _secondaryContext : _primaryContext;
+
+            var result = _transferService.TransferFullStack(source, destination, sourceEntry.Instance.DefinitionId);
+
+            return result.succeeded
+                ? DragDropResult.Success()
+                : DragDropResult.Failure(result.userFacingMessageKey);
         }
 
         private DragDropResult DropIntoWorld(DragPayload payload)
@@ -179,20 +205,45 @@ namespace Game.Inventory.UI.DragAndDrop
                 return DragDropResult.Failure("dragdrop.source_not_found");
             }
 
-            var removeResult = _inventoryService.RemoveInstance(sourceEntry.Instance.InstanceId);
+            InventoryService owningService = BelongsToPrimary(payload.instanceId) ? _primaryInventoryService : _secondaryInventoryService;
+            var removeResult = owningService.RemoveInstance(sourceEntry.Instance.InstanceId);
 
             return removeResult.Succeeded
                 ? DragDropResult.Success()
                 : DragDropResult.Failure("dragdrop.remove_failed");
         }
 
+        private bool BelongsToPrimary(string instanceId)
+        {
+            foreach (InventoryEntry entry in _primaryInventoryService.Container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == instanceId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private InventoryEntry FindEntryByInstanceId(string instanceId)
         {
-            foreach (InventoryEntry entry in _inventoryService.Container.Entries)
+            foreach (InventoryEntry entry in _primaryInventoryService.Container.Entries)
             {
                 if (entry.Instance.InstanceId.ToString() == instanceId)
                 {
                     return entry;
+                }
+            }
+
+            if (_secondaryInventoryService != null)
+            {
+                foreach (InventoryEntry entry in _secondaryInventoryService.Container.Entries)
+                {
+                    if (entry.Instance.InstanceId.ToString() == instanceId)
+                    {
+                        return entry;
+                    }
                 }
             }
 
