@@ -28,8 +28,11 @@ namespace Game.Inventory.UI.Presenters
         private readonly ItemUseService _itemUseService;
         private readonly ItemDatabase _database;
         private readonly IReadOnlyList<EquipmentSlotDefinition> _knownSlots;
+        private readonly InventoryService _primaryInventoryService;
+        private readonly InventoryService _secondaryInventoryService;
+
         public ItemContextMenuPresenter(
-            InventoryService inventoryService,
+            InventoryService primaryInventoryService,
             EquipmentService equipmentService,
             EquipmentValidationService equipmentValidationService,
             EquipmentLoadout loadout,
@@ -37,9 +40,11 @@ namespace Game.Inventory.UI.Presenters
             QuickSlotCollection quickSlots,
             ItemUseService itemUseService,
             ItemDatabase database,
-            IReadOnlyList<EquipmentSlotDefinition> knownSlots)
+            IReadOnlyList<EquipmentSlotDefinition> knownSlots,
+            InventoryService secondaryInventoryService = null)
         {
-            _inventoryService = inventoryService;
+            _primaryInventoryService = primaryInventoryService;
+            _secondaryInventoryService = secondaryInventoryService;
             _equipmentService = equipmentService;
             _equipmentValidationService = equipmentValidationService;
             _loadout = loadout;
@@ -182,7 +187,7 @@ namespace Game.Inventory.UI.Presenters
                     break;
 
                 case ContextMenuActionKind.Drop:
-                    _inventoryService.RemoveInstance(typedInstanceId);
+                    ResolveOwningService(instanceId).RemoveInstance(typedInstanceId);
                     break;
 
                 case ContextMenuActionKind.Favorite:
@@ -194,7 +199,7 @@ namespace Game.Inventory.UI.Presenters
                     break;
 
                 case ContextMenuActionKind.Destroy:
-                    _inventoryService.RemoveInstance(typedInstanceId);
+                    ResolveOwningService(instanceId).RemoveInstance(typedInstanceId);
                     break;
 
                 default:
@@ -317,11 +322,22 @@ namespace Game.Inventory.UI.Presenters
 
         private InventoryEntry FindEntry(string instanceId)
         {
-            foreach (InventoryEntry entry in _inventoryService.Container.Entries)
+            foreach (InventoryEntry entry in _primaryInventoryService.Container.Entries)
             {
                 if (entry.Instance.InstanceId.ToString() == instanceId)
                 {
                     return entry;
+                }
+            }
+
+            if (_secondaryInventoryService != null)
+            {
+                foreach (InventoryEntry entry in _secondaryInventoryService.Container.Entries)
+                {
+                    if (entry.Instance.InstanceId.ToString() == instanceId)
+                    {
+                        return entry;
+                    }
                 }
             }
 
@@ -330,12 +346,11 @@ namespace Game.Inventory.UI.Presenters
 
         private ItemInstance FindInstanceAnywhere(string instanceId)
         {
-            foreach (InventoryEntry entry in _inventoryService.Container.Entries)
+            InventoryEntry entry = FindEntry(instanceId);
+
+            if (entry != null)
             {
-                if (entry.Instance.InstanceId.ToString() == instanceId)
-                {
-                    return entry.Instance;
-                }
+                return entry.Instance;
             }
 
             foreach (var kvp in _loadout.EquippedBySlot)
@@ -347,6 +362,30 @@ namespace Game.Inventory.UI.Presenters
             }
 
             return null;
+        }
+
+        private InventoryService ResolveOwningService(string instanceId)
+        {
+            foreach (InventoryEntry entry in _primaryInventoryService.Container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == instanceId)
+                {
+                    return _primaryInventoryService;
+                }
+            }
+
+            if (_secondaryInventoryService != null)
+            {
+                foreach (InventoryEntry entry in _secondaryInventoryService.Container.Entries)
+                {
+                    if (entry.Instance.InstanceId.ToString() == instanceId)
+                    {
+                        return _secondaryInventoryService;
+                    }
+                }
+            }
+
+            return _primaryInventoryService;
         }
     }
 }

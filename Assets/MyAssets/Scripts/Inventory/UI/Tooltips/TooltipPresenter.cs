@@ -13,15 +13,23 @@ namespace Game.Inventory.UI.Tooltips
     //ItemDetailsPresenter's full view-model, a tooltip is a glance, not the details panel
     public class TooltipPresenter
     {
-        private readonly InventoryService _inventoryService;
+        private readonly InventoryService _primaryInventoryService;
+        private readonly InventoryService _secondaryInventoryService;
         private readonly EquipmentLoadout _loadout;
         private readonly ItemDatabase _database;
         private readonly ILocalizationTextProvider _localization;
         private readonly IStatModifierPort _statModifiers;
 
-        public TooltipPresenter(InventoryService inventoryService, EquipmentLoadout loadout, ItemDatabase database, ILocalizationTextProvider localization, IStatModifierPort statModifiers)
+        public TooltipPresenter(
+            InventoryService primaryInventoryService,
+            EquipmentLoadout loadout,
+            ItemDatabase database,
+            ILocalizationTextProvider localization,
+            IStatModifierPort statModifiers,
+            InventoryService secondaryInventoryService = null)
         {
-            _inventoryService = inventoryService;
+            _primaryInventoryService = primaryInventoryService;
+            _secondaryInventoryService = secondaryInventoryService;
             _loadout = loadout;
             _database = database;
             _localization = localization;
@@ -95,11 +103,22 @@ namespace Game.Inventory.UI.Tooltips
 
         private ItemInstance FindInstanceAnywhere(string instanceId)
         {
-            foreach (InventoryEntry entry in _inventoryService.Container.Entries)
+            foreach (InventoryEntry entry in _primaryInventoryService.Container.Entries)
             {
                 if (entry.Instance.InstanceId.ToString() == instanceId)
                 {
                     return entry.Instance;
+                }
+            }
+
+            if (_secondaryInventoryService != null)
+            {
+                foreach (InventoryEntry entry in _secondaryInventoryService.Container.Entries)
+                {
+                    if (entry.Instance.InstanceId.ToString() == instanceId)
+                    {
+                        return entry.Instance;
+                    }
                 }
             }
 
