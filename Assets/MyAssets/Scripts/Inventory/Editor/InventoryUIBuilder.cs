@@ -31,6 +31,36 @@ namespace Game.Inventory.Editor
         private const string CompositionRootName = "InventoryCompositionRoot";
         private const string QuickSlotInputHandlerName = "QuickSlotInputHandler";
 
+        private static InventoryUIAssetLibrary _assetLibrary;
+
+        private static InventoryUIAssetLibrary GetAssetLibrary()
+        {
+            if (_assetLibrary == null)
+            {
+                _assetLibrary = LoadFirstAsset<InventoryUIAssetLibrary>();
+                Debug.Log($"[InventoryUIBuilder] Asset library loaded: {(_assetLibrary != null ? _assetLibrary.name : "NULL - none found")}");
+
+            }
+
+            return _assetLibrary;
+        }
+
+        //applies a sprite to an Image if one is provided, switching to Sliced so 9-slice
+        //borders render correctly, leaves the Image's existing flat-color setup completely
+        //untouched if sprite is null, which is the exact current fallback behaviour
+        private static void ApplySpriteIfAvailable(Image image, Sprite sprite, Image.Type spriteType = Image.Type.Sliced)
+        {
+            if (sprite == null || image == null)
+            {
+                Debug.Log($"[InventoryUIBuilder] ApplySpriteIfAvailable skipped - sprite null: {sprite == null}, image null: {image == null}");
+                return;
+            }
+
+            Debug.Log($"[InventoryUIBuilder] Applying sprite '{sprite.name}' to image on '{image.gameObject.name}'");
+            image.sprite = sprite;
+            image.type = spriteType;
+        }
+
         [MenuItem("Tools/Inventory/Build Inventory UI")]
         [System.Obsolete]
         public static void BuildInventoryUI()
@@ -47,6 +77,14 @@ namespace Game.Inventory.Editor
             GameObject screenRoot = FindOrCreateChild(canvas.transform, "InventoryScreenRoot");
             SetStretch(screenRoot, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             screenRoot.SetActive(false);
+
+            Image screenBackgroundImage = screenRoot.GetComponent<Image>();
+            if (screenBackgroundImage == null && GetAssetLibrary()?.screenBackground != null)
+            {
+                screenBackgroundImage = screenRoot.AddComponent<Image>();
+                screenBackgroundImage.color = Color.white;
+            }
+            ApplySpriteIfAvailable(screenBackgroundImage, GetAssetLibrary()?.screenBackground);
 
             // ---------- left column: list, search, category filters, footer ----------
 
@@ -66,6 +104,7 @@ namespace Game.Inventory.Editor
             List<ItemCategoryDefinition> categories = LoadAllAssets<ItemCategoryDefinition>();
             GameObject categoryTabsGo = BuildCategoryTabs(leftColumn.transform, categories, out var tabButtons, out Toggle favoritesToggle);
             SetAnchoredBox(categoryTabsGo, new Vector2(0f, 0.76f), new Vector2(1f, 0.86f), Vector2.zero, Vector2.zero);
+            ApplySpriteIfAvailable(categoryTabsGo.GetComponent<Image>(), GetAssetLibrary()?.categoryTabBarBackground);
 
             var buttonList = new List<Button>();
             var targetList = new List<ItemCategoryDefinition>();
@@ -129,6 +168,7 @@ namespace Game.Inventory.Editor
             GameObject playerStatsPanel = FindOrCreateChild(tabContentArea.transform, "PlayerStatsPanel", typeof(Image), typeof(VerticalLayoutGroup));
             SetStretch(playerStatsPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             playerStatsPanel.GetComponent<Image>().color = new Color(0.06f, 0.06f, 0.08f, 0.9f);
+            ApplySpriteIfAvailable(playerStatsPanel.GetComponent<Image>(), GetAssetLibrary()?.tabPanelBackground);
             var playerStatsVlg = playerStatsPanel.GetComponent<VerticalLayoutGroup>();
             playerStatsVlg.padding = new RectOffset(12, 12, 12, 12);
             playerStatsVlg.spacing = 0f;
@@ -153,6 +193,7 @@ namespace Game.Inventory.Editor
             GameObject settingsPanel = FindOrCreateChild(tabContentArea.transform, "SettingsPanel", typeof(Image));
             SetStretch(settingsPanel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             settingsPanel.GetComponent<Image>().color = new Color(0.04f, 0.04f, 0.05f, 0.98f);
+            ApplySpriteIfAvailable(settingsPanel.GetComponent<Image>(), GetAssetLibrary()?.tabPanelBackground);
             TMP_Text settingsPlaceholder = CreateTmpChild(settingsPanel.transform, "PlaceholderText", 16f, TextAlignmentOptions.Center);
             settingsPlaceholder.text = "Settings (placeholder)";
             SetStretch(settingsPlaceholder.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -249,6 +290,7 @@ namespace Game.Inventory.Editor
             GameObject panel = FindOrCreateChild(parent, "ContainerScreenPanel", typeof(Image));
             SetStretch(panel, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             panel.GetComponent<Image>().color = new Color(0.06f, 0.06f, 0.08f, 0.9f);
+            ApplySpriteIfAvailable(panel.GetComponent<Image>(), GetAssetLibrary()?.tabPanelBackground);
 
             TMP_Text titleText = CreateTmpChild(panel.transform, "TitleText", 16f, TextAlignmentOptions.MidlineLeft);
             var titleRt = titleText.GetComponent<RectTransform>();
@@ -264,6 +306,7 @@ namespace Game.Inventory.Editor
             closeRt.offsetMin = Vector2.zero;
             closeRt.offsetMax = Vector2.zero;
             closeButtonGo.GetComponent<Image>().color = new Color(0.5f, 0.15f, 0.15f);
+            ApplySpriteIfAvailable(closeButtonGo.GetComponent<Image>(), GetAssetLibrary()?.iconButtonBackground);
             TMP_Text closeText = CreateTmpChild(closeButtonGo.transform, "Text", 14f, TextAlignmentOptions.Center);
             closeText.text = "X";
             SetStretch(closeText.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -409,6 +452,7 @@ namespace Game.Inventory.Editor
             root.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, 56f);
             root.GetComponent<LayoutElement>().preferredHeight = 56f;
             root.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.03f);
+            ApplySpriteIfAvailable(root.GetComponent<Image>(), GetAssetLibrary()?.entryBackground);
 
             var hlg = root.GetComponent<HorizontalLayoutGroup>();
             hlg.spacing = 8f;
@@ -418,6 +462,10 @@ namespace Game.Inventory.Editor
             hlg.childControlWidth = false;
 
             Image icon = CreateImageChild(root.transform, "IconImage", new Vector2(40f, 40f));
+            if (icon.sprite == null)
+            {
+                ApplySpriteIfAvailable(icon, GetAssetLibrary()?.unknownItemIcon, Image.Type.Simple);
+            }
             LayoutElement iconLayoutElement = icon.gameObject.AddComponent<LayoutElement>();
             iconLayoutElement.preferredWidth = 40f;
             iconLayoutElement.preferredHeight = 40f;
@@ -431,6 +479,7 @@ namespace Game.Inventory.Editor
             var borderImage = rarityBorder.GetComponent<Image>();
             borderImage.color = Color.clear;
             borderImage.raycastTarget = false;
+            ApplySpriteIfAvailable(borderImage, GetAssetLibrary()?.rarityBorderMask, Image.Type.Simple);
 
             GameObject textColumn = CreateChild(root.transform, "TextColumn", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
             textColumn.GetComponent<LayoutElement>().flexibleWidth = 1f;
@@ -461,10 +510,10 @@ namespace Game.Inventory.Editor
             indicatorHlg.spacing = 4f;
             indicatorHlg.childControlWidth = false;
 
-            GameObject equippedIndicator = CreateIndicator(indicatorRow.transform, "EquippedIndicator", new Color(0.3f, 0.7f, 1f));
-            GameObject questIndicator = CreateIndicator(indicatorRow.transform, "QuestItemIndicator", new Color(1f, 0.85f, 0.3f));
-            GameObject quickSlotIndicator = CreateIndicator(indicatorRow.transform, "QuickSlotIndicator", new Color(0.5f, 1f, 0.5f));
-            GameObject favoriteIndicator = CreateIndicator(indicatorRow.transform, "FavoriteIndicator", new Color(1f, 0.6f, 0.2f));
+            GameObject equippedIndicator = CreateIndicator(indicatorRow.transform, "EquippedIndicator", new Color(0.3f, 0.7f, 1f), GetAssetLibrary()?.equippedIndicatorIcon);
+            GameObject questIndicator = CreateIndicator(indicatorRow.transform, "QuestItemIndicator", new Color(1f, 0.85f, 0.3f), GetAssetLibrary()?.questItemIndicatorIcon);
+            GameObject quickSlotIndicator = CreateIndicator(indicatorRow.transform, "QuickSlotIndicator", new Color(0.5f, 1f, 0.5f), GetAssetLibrary()?.quickSlotIndicatorIcon);
+            GameObject favoriteIndicator = CreateIndicator(indicatorRow.transform, "FavoriteIndicator", new Color(1f, 0.6f, 0.2f), GetAssetLibrary()?.favoriteIndicatorIcon);
 
             InventoryEntryView view = root.AddComponent<InventoryEntryView>();
             AssignField(view, "iconImage", icon);
@@ -500,6 +549,7 @@ namespace Game.Inventory.Editor
             GameObject buttonGo = CreateChild(root.transform, "ActionButton", typeof(RectTransform), typeof(Image), typeof(Button));
             SetStretch(buttonGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             buttonGo.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.06f);
+            ApplySpriteIfAvailable(buttonGo.GetComponent<Image>(), GetAssetLibrary()?.contextMenuButtonBackground);
             TMP_Text buttonLabel = CreateTmpChild(buttonGo.transform, "Text (TMP)", 13f, TextAlignmentOptions.Center);
             SetStretch(buttonLabel.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
 
@@ -637,6 +687,7 @@ namespace Game.Inventory.Editor
             go.GetComponent<LayoutElement>().preferredWidth = 90f;
             go.GetComponent<LayoutElement>().preferredHeight = 28f;
             go.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.06f);
+            ApplySpriteIfAvailable(go.GetComponent<Image>(), GetAssetLibrary()?.categoryTabBackground);
 
             TMP_Text text = FindChildByName(go.transform, "Text")?.GetComponent<TMP_Text>();
             if (text == null)
@@ -735,6 +786,7 @@ namespace Game.Inventory.Editor
             GameObject panel = FindOrCreateChild(parent, "DetailsPanel", typeof(Image), typeof(VerticalLayoutGroup));
             SetAnchoredBox(panel, new Vector2(0.62f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
             panel.GetComponent<Image>().color = new Color(0.06f, 0.06f, 0.08f, 0.9f);
+            ApplySpriteIfAvailable(panel.GetComponent<Image>(), GetAssetLibrary()?.detailsPanelBackground);
             var vlg = panel.GetComponent<VerticalLayoutGroup>();
             vlg.padding = new RectOffset(12, 12, 12, 12);
             vlg.spacing = 6f;
@@ -760,6 +812,7 @@ namespace Game.Inventory.Editor
             closeButtonGo.GetComponent<LayoutElement>().preferredWidth = 24f;
             closeButtonGo.GetComponent<LayoutElement>().preferredHeight = 24f;
             closeButtonGo.GetComponent<Image>().color = new Color(0.5f, 0.15f, 0.15f);
+            ApplySpriteIfAvailable(closeButtonGo.GetComponent<Image>(), GetAssetLibrary()?.iconButtonBackground);
             TMP_Text closeButtonText = CreateTmpChild(closeButtonGo.transform, "Text", 14f, TextAlignmentOptions.Center);
             closeButtonText.text = "X";
             SetStretch(closeButtonText.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -784,6 +837,7 @@ namespace Game.Inventory.Editor
             durabilityRt.sizeDelta = new Vector2(0f, 10f);
             durabilityBg.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.08f);
             durabilityBg.GetComponent<LayoutElement>().preferredWidth = 96f;
+            ApplySpriteIfAvailable(durabilityBg.GetComponent<Image>(), GetAssetLibrary()?.durabilityBarBackground);
 
             GameObject durabilityFillGo = CreateChild(durabilityBg.transform, "Fill", typeof(RectTransform), typeof(Image));
             SetStretch(durabilityFillGo, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -791,6 +845,10 @@ namespace Game.Inventory.Editor
             durabilityFill.type = Image.Type.Filled;
             durabilityFill.fillMethod = Image.FillMethod.Horizontal;
             durabilityFill.color = new Color(0.4f, 0.8f, 0.4f);
+            if (GetAssetLibrary()?.durabilityBarFill != null)
+            {
+                durabilityFill.sprite = GetAssetLibrary().durabilityBarFill;
+            }
 
             TMP_Text descriptionText = CreateTmpChild(panel.transform, "DescriptionText", 13f, TextAlignmentOptions.TopLeft);
             descriptionText.enableWordWrapping = true;
@@ -811,7 +869,8 @@ namespace Game.Inventory.Editor
             requirementsWarning.GetComponent<Image>().color = new Color(0.5f, 0.1f, 0.1f, 0.4f);
             requirementsWarning.GetComponent<LayoutElement>().flexibleWidth = 1f;
             requirementsWarning.GetComponent<LayoutElement>().preferredHeight = 24f;
-            requirementsWarning.GetComponent<Image>().color = new Color(0.5f, 0.1f, 0.1f, 0.4f);
+            //requirementsWarning.GetComponent<Image>().color = new Color(0.5f, 0.1f, 0.1f, 0.4f);
+            ApplySpriteIfAvailable(requirementsWarning.GetComponent<Image>(), GetAssetLibrary()?.requirementsWarningBackground);
             TMP_Text warningText = CreateTmpChild(requirementsWarning.transform, "Text", 12f, TextAlignmentOptions.Center);
             warningText.text = "Requirements not met";
             SetStretch(warningText.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -881,6 +940,7 @@ namespace Game.Inventory.Editor
             go.transform.SetParent(parent, false);
             SetSize(go, new Vector2(64f, 64f));
             go.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.06f);
+            ApplySpriteIfAvailable(go.GetComponent<Image>(), GetAssetLibrary()?.equipmentSlotBackground);
 
             Image icon = CreateImageChild(go.transform, "IconImage", new Vector2(48f, 48f));
             TMP_Text emptyLabel = CreateTmpChild(go.transform, "EmptySlotLabel", 9f, TextAlignmentOptions.Center);
@@ -893,6 +953,7 @@ namespace Game.Inventory.Editor
             unequipRt.pivot = new Vector2(1f, 1f);
             unequipRt.sizeDelta = new Vector2(18f, 18f);
             unequipButtonGo.GetComponent<Image>().color = new Color(0.6f, 0.15f, 0.15f);
+            ApplySpriteIfAvailable(unequipButtonGo.GetComponent<Image>(), GetAssetLibrary()?.iconButtonBackground);
             TMP_Text unequipX = CreateTmpChild(unequipButtonGo.transform, "Text", 10f, TextAlignmentOptions.Center);
             unequipX.text = "x";
             SetStretch(unequipX.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -943,6 +1004,7 @@ namespace Game.Inventory.Editor
             go.transform.SetParent(parent, false);
             SetSize(go, new Vector2(56f, 56f));
             go.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.06f);
+            ApplySpriteIfAvailable(go.GetComponent<Image>(), GetAssetLibrary()?.quickSlotBackground);
 
             Image icon = CreateImageChild(go.transform, "IconImage", new Vector2(40f, 40f));
 
@@ -968,10 +1030,15 @@ namespace Game.Inventory.Editor
             cooldownImage.fillMethod = Image.FillMethod.Radial360;
             cooldownImage.color = new Color(0f, 0f, 0f, 0.6f);
             cooldownGo.SetActive(false);
+            if (GetAssetLibrary()?.quickSlotCooldownOverlay != null)
+            {
+                cooldownImage.sprite = GetAssetLibrary().quickSlotCooldownOverlay;
+            }
 
             GameObject emptyIndicator = CreateChild(go.transform, "EmptyStateIndicator", typeof(RectTransform), typeof(Image));
             SetStretch(emptyIndicator, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             emptyIndicator.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.02f);
+            ApplySpriteIfAvailable(emptyIndicator.GetComponent<Image>(), GetAssetLibrary()?.quickSlotEmptyIndicator, Image.Type.Simple);
 
             QuickSlotView view = go.GetComponent<QuickSlotView>();
             if (view == null) view = go.AddComponent<QuickSlotView>();
@@ -1000,6 +1067,7 @@ namespace Game.Inventory.Editor
             rootRt.pivot = new Vector2(0f, 1f);
 
             go.GetComponent<Image>().color = new Color(0.08f, 0.08f, 0.08f, 0.95f);
+            ApplySpriteIfAvailable(go.GetComponent<Image>(), GetAssetLibrary()?.contextMenuBackground);
 
             GameObject actionParent = FindOrCreateChild(go.transform, "ActionButtonParent", typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
 
@@ -1042,6 +1110,7 @@ namespace Game.Inventory.Editor
         {
             GameObject go = FindOrCreateChild(parent, "TooltipPanel", typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
             go.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.05f, 0.95f);
+            ApplySpriteIfAvailable(go.GetComponent<Image>(), GetAssetLibrary()?.tooltipBackground);
 
             var rt = go.GetComponent<RectTransform>();
             rt.pivot = new Vector2(0f, 1f);
@@ -1106,10 +1175,12 @@ namespace Game.Inventory.Editor
             GameObject backdrop = FindOrCreateChild(parent, "ConfirmationDialog", typeof(Image));
             SetStretch(backdrop, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             backdrop.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.6f);
+            ApplySpriteIfAvailable(backdrop.GetComponent<Image>(), GetAssetLibrary()?.confirmationBackdropBackground);
 
             GameObject inner = FindOrCreateChild(backdrop.transform, "Panel", typeof(Image), typeof(VerticalLayoutGroup));
             SetSize(inner, new Vector2(360f, 160f));
             inner.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.12f, 1f);
+            ApplySpriteIfAvailable(inner.GetComponent<Image>(), GetAssetLibrary()?.confirmationDialogBackground);
             var vlg = inner.GetComponent<VerticalLayoutGroup>();
             vlg.padding = new RectOffset(16, 16, 16, 16);
             vlg.spacing = 10f;
@@ -1147,6 +1218,7 @@ namespace Game.Inventory.Editor
             GameObject go = FindOrCreateChild(parent, "ErrorToast", typeof(Image));
             SetAnchoredBox(go, new Vector2(0.3f, 0.02f), new Vector2(0.7f, 0.08f), Vector2.zero, Vector2.zero);
             go.GetComponent<Image>().color = new Color(0.5f, 0.1f, 0.1f, 0.9f);
+            ApplySpriteIfAvailable(go.GetComponent<Image>(), GetAssetLibrary()?.errorToastBackground);
 
             TMP_Text messageText = CreateTmpChild(go.transform, "MessageText", 13f, TextAlignmentOptions.Center);
             SetStretch(messageText.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -1256,8 +1328,12 @@ namespace Game.Inventory.Editor
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
 
-            Image icon = CreateImageChild(go.transform, "IconImage", new Vector2(48f, 48f));
+            GameObject frameGo = CreateImageChild(go.transform, "FrameImage", new Vector2(48f, 48f)).gameObject;
+            ApplySpriteIfAvailable(frameGo.GetComponent<Image>(), GetAssetLibrary()?.dragGhostFrame, Image.Type.Simple);
 
+            Image icon = CreateImageChild(go.transform, "IconImage", new Vector2(40f, 40f));
+            ApplySpriteIfAvailable(icon, GetAssetLibrary()?.dragGhostFrame, Image.Type.Simple);
+            
             var rt = go.GetComponent<RectTransform>();
             rt.pivot = new Vector2(0.5f, 0.5f);
 
@@ -1300,6 +1376,7 @@ namespace Game.Inventory.Editor
 
             SetSize(go, new Vector2(110f, 32f));
             go.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.08f);
+            ApplySpriteIfAvailable(go.GetComponent<Image>(), GetAssetLibrary()?.standardButtonBackground);
 
             TMP_Text text = FindChildByName(go.transform, "Text")?.GetComponent<TMP_Text>();
             if (text == null)
@@ -1312,7 +1389,7 @@ namespace Game.Inventory.Editor
             return go;
         }
 
-        private static GameObject CreateIndicator(Transform parent, string name, Color color)
+        private static GameObject CreateIndicator(Transform parent, string name, Color color, Sprite sprite = null)
         {
             GameObject go = CreateChild(parent, name, typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             SetSize(go, new Vector2(16f, 16f));
@@ -1320,6 +1397,7 @@ namespace Game.Inventory.Editor
             var image = go.GetComponent<Image>();
             image.color = color;
             image.raycastTarget = false;
+            ApplySpriteIfAvailable(image, sprite, Image.Type.Simple);
             go.SetActive(false);
             return go;
         }
