@@ -26,6 +26,12 @@ namespace Game.Inventory.UI.Screens
         private string _selectedInstanceId;
 
         public event System.Action CloseRequested;
+        private string _hoveredInstanceId;
+
+        public void SetHoveredInstance(string instanceId)
+        {
+            _hoveredInstanceId = instanceId;
+        }
 
         public void Initialize(TransferScreenPresenter presenter)
         {

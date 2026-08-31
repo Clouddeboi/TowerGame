@@ -86,11 +86,75 @@ namespace Game.Inventory.UI
         private TransferService _transferService;
         private TransferScreenPresenter _transferScreenPresenter;
 
+        private string _hoveredInstanceId;
+
         private void Update()
         {
-            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+            if (Keyboard.current == null)
             {
-                ToggleTransferScreen();
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_hoveredInstanceId))
+            {
+                return;
+            }
+
+            bool shiftHeld = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
+
+            if (Keyboard.current.qKey.wasPressedThisFrame)
+            {
+                DropHovered(shiftHeld);
+            }
+
+            if (Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                EquipHovered();
+            }
+
+            if (Keyboard.current.fKey.wasPressedThisFrame)
+            {
+                ToggleFavoriteHovered();
+            }
+
+            if (Keyboard.current.dKey.wasPressedThisFrame)
+            {
+                DestroyHovered();
+            }
+
+            if (Keyboard.current.cKey.wasPressedThisFrame)
+            {
+                CompareHovered();
+            }
+
+            for (int digit = 1; digit <= 8; digit++)
+            {
+                if (WasDigitPressedThisFrame(digit))
+                {
+                    AssignHoveredToQuickSlot(digit - 1);
+                    break;
+                }
+            }
+
+            if (shiftHeld && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                SplitStackHovered();
+            }
+        }
+
+        private bool WasDigitPressedThisFrame(int digit)
+        {
+            switch (digit)
+            {
+                case 1: return Keyboard.current.digit1Key.wasPressedThisFrame;
+                case 2: return Keyboard.current.digit2Key.wasPressedThisFrame;
+                case 3: return Keyboard.current.digit3Key.wasPressedThisFrame;
+                case 4: return Keyboard.current.digit4Key.wasPressedThisFrame;
+                case 5: return Keyboard.current.digit5Key.wasPressedThisFrame;
+                case 6: return Keyboard.current.digit6Key.wasPressedThisFrame;
+                case 7: return Keyboard.current.digit7Key.wasPressedThisFrame;
+                case 8: return Keyboard.current.digit8Key.wasPressedThisFrame;
+                default: return false;
             }
         }
 
@@ -211,8 +275,16 @@ namespace Game.Inventory.UI
             if (entryList != null)
             {
                 entryList.SetHoverHandler(
-                    (instanceId, screenPos) => tooltipDelayController.RequestShow(instanceId, screenPos),
-                    () => tooltipDelayController.CancelShow());
+                    (instanceId, screenPos) =>
+                    {
+                        tooltipDelayController.RequestShow(instanceId, screenPos);
+                        _hoveredInstanceId = instanceId;
+                    },
+                    () =>
+                    {
+                        tooltipDelayController.CancelShow();
+                        _hoveredInstanceId = null;
+                    });
             }
 
             var dragCoordinator = new DragAndDrop.PointerDragCoordinator(
@@ -228,6 +300,14 @@ namespace Game.Inventory.UI
 
             entryList?.SetContextMenuHandler((instanceId, screenPos) =>
             {
+                bool shiftHeld = Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+
+                if (shiftHeld)
+                {
+                    UseItem(instanceId);
+                    return;
+                }
+
                 var actions = _contextMenuPresenter.BuildActions(instanceId);
                 contextMenuView.Show(instanceId, actions);
 
@@ -277,11 +357,31 @@ namespace Game.Inventory.UI
             for (int i = 0; i < equipmentSlotViews.Count; i++)
             {
                 if (equipmentSlotViews[i] == null) Debug.LogError($"equipmentSlotViews[{i}] is null", this);
+                equipmentSlotViews[i].HoverStarted += (instanceId, screenPos) =>
+                {
+                    tooltipDelayController.RequestShow(instanceId, screenPos);
+                    _hoveredInstanceId = instanceId;
+                };
+                equipmentSlotViews[i].HoverEnded += () =>
+                {
+                    tooltipDelayController.CancelShow();
+                    _hoveredInstanceId = null;
+                };
             }
 
             for (int i = 0; i < quickSlotViews.Count; i++)
             {
                 if (quickSlotViews[i] == null) Debug.LogError($"quickSlotViews[{i}] is null", this);
+                quickSlotViews[i].HoverStarted += (instanceId, screenPos) =>
+                {
+                    tooltipDelayController.RequestShow(instanceId, screenPos);
+                    _hoveredInstanceId = instanceId;
+                };
+                quickSlotViews[i].HoverEnded += () =>
+                {
+                    tooltipDelayController.CancelShow();
+                    _hoveredInstanceId = null;
+                };
             }
 
             inventoryScreenView.Initialize(_inventoryScreenPresenter);
@@ -313,6 +413,14 @@ namespace Game.Inventory.UI
                     }
 
                     string instanceId = equippedInstance.InstanceId.ToString();
+                    bool shiftHeld = Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+
+                    if (shiftHeld)
+                    {
+                        UseItem(instanceId);
+                        return;
+                    }
+
                     var actions = _contextMenuPresenter.BuildActions(instanceId);
                     contextMenuView.Show(instanceId, actions);
 
@@ -338,11 +446,29 @@ namespace Game.Inventory.UI
             var containerEntryList = containerScreenView.EntryList;
 
             containerEntryList.SetHoverHandler(
-                (instanceId, screenPos) => tooltipDelayController.RequestShow(instanceId, screenPos),
-                () => tooltipDelayController.CancelShow());
+                (instanceId, screenPos) =>
+                {
+                    tooltipDelayController.RequestShow(instanceId, screenPos);
+                    _hoveredInstanceId = instanceId;
+                    containerScreenView.SetHoveredInstance(instanceId);
+                },
+                () =>
+                {
+                    tooltipDelayController.CancelShow();
+                    _hoveredInstanceId = null;
+                    containerScreenView.SetHoveredInstance(null);
+                });
 
             containerEntryList.SetContextMenuHandler((instanceId, screenPos) =>
             {
+                bool shiftHeld = Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+
+                if (shiftHeld)
+                {
+                    UseItem(instanceId);
+                    return;
+                }
+
                 var actions = _contextMenuPresenter.BuildActions(instanceId);
                 contextMenuView.Show(instanceId, actions);
 
@@ -492,6 +618,266 @@ namespace Game.Inventory.UI
             {
                 CloseTransferScreen();
             }
+        }
+
+        private ItemInstance FindHoveredInstance(out InventoryService owningService, out bool isEquipped)
+        {
+            owningService = null;
+            isEquipped = false;
+
+            foreach (InventoryEntry entry in PlayerInventoryService.Container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == _hoveredInstanceId)
+                {
+                    owningService = PlayerInventoryService;
+                    return entry.Instance;
+                }
+            }
+
+            foreach (InventoryEntry entry in ChestContainerContext.container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == _hoveredInstanceId)
+                {
+                    owningService = ChestContainerContext.service;
+                    return entry.Instance;
+                }
+            }
+
+            foreach (var kvp in Loadout.EquippedBySlot)
+            {
+                if (kvp.Value.InstanceId.ToString() == _hoveredInstanceId)
+                {
+                    isEquipped = true;
+                    return kvp.Value;
+                }
+            }
+
+            return null;
+        }
+
+        private void DropHovered(bool fullStack)
+        {
+            ItemInstance instance = FindHoveredInstance(out InventoryService owningService, out bool isEquipped);
+
+            if (instance == null || isEquipped || owningService == null)
+            {
+                return;
+            }
+
+            if (!itemDatabase.TryResolve(instance.DefinitionId, out ItemDefinition definition) || !definition.CanBeDropped)
+            {
+                return;
+            }
+
+            string instanceId = instance.InstanceId.ToString();
+
+            ConfirmationService.Request(
+                "confirm.title",
+                "confirm.drop_message",
+                () =>
+                {
+                    ItemInstance freshInstance = FindHoveredInstanceById(instanceId, out InventoryService freshOwningService);
+
+                    if (freshInstance == null || freshOwningService == null)
+                    {
+                        return;
+                    }
+
+                    if (fullStack || freshInstance.Quantity <= 1)
+                    {
+                        freshOwningService.RemoveInstance(freshInstance.InstanceId);
+                    }
+                    else
+                    {
+                        freshOwningService.RemoveInstanceQuantity(freshInstance.InstanceId, 1);
+                    }
+
+                    RefreshAfterHoverAction();
+                },
+                null);
+        }
+
+        private void EquipHovered()
+        {
+            if (string.IsNullOrEmpty(_hoveredInstanceId))
+            {
+                return;
+            }
+
+            _contextMenuPresenter.Execute(ContextMenuActionKind.Equip, _hoveredInstanceId, _playerUsageContext, Time.time);
+            RefreshAfterHoverAction();
+        }
+
+        private void ToggleFavoriteHovered()
+        {
+            foreach (InventoryEntry entry in PlayerInventoryService.Container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == _hoveredInstanceId)
+                {
+                    entry.SetFavorite(!entry.IsFavorite);
+                    RefreshAfterHoverAction();
+                    return;
+                }
+            }
+
+            foreach (InventoryEntry entry in ChestContainerContext.container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == _hoveredInstanceId)
+                {
+                    entry.SetFavorite(!entry.IsFavorite);
+                    RefreshAfterHoverAction();
+                    return;
+                }
+            }
+        }
+
+        private void DestroyHovered()
+        {
+            ItemInstance instance = FindHoveredInstance(out InventoryService owningService, out bool isEquipped);
+
+            if (instance == null || isEquipped || owningService == null)
+            {
+                return;
+            }
+
+            if (itemDatabase.TryResolve(instance.DefinitionId, out ItemDefinition definition)
+                && definition.IsQuestItem && definition.HasQuestItemData && !definition.QuestItemPayload.CanBeRemoved)
+            {
+                // protected quest item - cannot be destroyed, matches the context menu's own
+                // disabled/omitted Destroy action for this case
+                return;
+            }
+
+            string instanceId = instance.InstanceId.ToString();
+
+            ConfirmationService.Request(
+                "confirm.title",
+                "confirm.destroy_message",
+                () =>
+                {
+                    ItemInstance freshInstance = FindHoveredInstanceById(instanceId, out InventoryService freshOwningService);
+
+                    if (freshInstance == null || freshOwningService == null)
+                    {
+                        return;
+                    }
+
+                    freshOwningService.RemoveInstance(freshInstance.InstanceId);
+                    RefreshAfterHoverAction();
+                },
+                null);
+        }
+
+        private void CompareHovered()
+        {
+            // placeholder - no dedicated comparison overlay exists yet, Inspect already
+            // shows comparison deltas in the details panel for equippable items, reuse it
+            if (string.IsNullOrEmpty(_hoveredInstanceId))
+            {
+                return;
+            }
+
+            OnEntrySelected(_hoveredInstanceId);
+        }
+
+        private void AssignHoveredToQuickSlot(int slotIndex)
+        {
+            ItemInstance instance = FindHoveredInstance(out InventoryService owningService, out bool isEquipped);
+
+            if (instance == null || owningService != PlayerInventoryService)
+            {
+                // quick slots only accept items from the player's own inventory
+                return;
+            }
+
+            QuickSlotService.Assign(slotIndex, instance.DefinitionId);
+            RefreshAfterHoverAction();
+        }
+
+        private void SplitStackHovered()
+        {
+            ItemInstance instance = FindHoveredInstance(out InventoryService owningService, out bool isEquipped);
+
+            if (instance == null || isEquipped || owningService == null || instance.Quantity <= 1)
+            {
+                return;
+            }
+
+            int splitAmount = instance.Quantity / 2;
+
+            if (splitAmount <= 0)
+            {
+                return;
+            }
+
+            owningService.SplitStack(instance.InstanceId, splitAmount);
+            RefreshAfterHoverAction();
+        }
+
+        private void UseItem(string instanceId)
+        {
+            ItemInstance instance = null;
+
+            foreach (InventoryEntry entry in PlayerInventoryService.Container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == instanceId)
+                {
+                    instance = entry.Instance;
+                    break;
+                }
+            }
+
+            if (instance == null)
+            {
+                // items in the chest, or equipped items, are not directly usable this way -
+                // Use only applies to the player's own carried consumables
+                return;
+            }
+
+            ItemUseService.Use(instance.InstanceId, _playerUsageContext, Time.time);
+            RefreshAfterHoverAction();
+        }
+
+        private void RefreshAfterHoverAction()
+        {
+            inventoryScreenView.Refresh();
+            RefreshEquipmentPanel();
+            RefreshQuickSlotBar();
+            RefreshPlayerStatsPanel();
+
+            if (_transferScreenIsOpen)
+            {
+                containerScreenView.SendMessage("RefreshDisplay", SendMessageOptions.DontRequireReceiver);
+            }
+        }
+
+        //re-resolves an instance by id at confirmation-callback time, rather than closing
+        //over the original ItemInstance reference directly, the player may have moved the
+        //mouse, changed hover state, or the instance may have been mutated between the
+        //keypress and the confirmation click, so this re-validates freshly
+        private ItemInstance FindHoveredInstanceById(string instanceId, out InventoryService owningService)
+        {
+            owningService = null;
+
+            foreach (InventoryEntry entry in PlayerInventoryService.Container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == instanceId)
+                {
+                    owningService = PlayerInventoryService;
+                    return entry.Instance;
+                }
+            }
+
+            foreach (InventoryEntry entry in ChestContainerContext.container.Entries)
+            {
+                if (entry.Instance.InstanceId.ToString() == instanceId)
+                {
+                    owningService = ChestContainerContext.service;
+                    return entry.Instance;
+                }
+            }
+
+            return null;
         }
 
         [ContextMenu("Debug: Add Test Items")]
