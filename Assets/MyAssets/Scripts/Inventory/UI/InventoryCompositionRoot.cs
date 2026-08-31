@@ -88,6 +88,9 @@ namespace Game.Inventory.UI
 
         private string _hoveredInstanceId;
 
+        [SerializeField] private Views.CompareView compareView;
+        private ComparePresenter _comparePresenter;
+
         private void Update()
         {
             if (Keyboard.current == null)
@@ -247,6 +250,8 @@ namespace Game.Inventory.UI
             _dragDropController = new DragDropController(
                 PlayerInventoryService, EquipmentService, QuickSlotService, itemDatabase);
 
+            _comparePresenter = new ComparePresenter(PlayerInventoryService, Loadout, itemDatabase, displayDataBuilder, localization);
+
             _transferScreenPresenter = new TransferScreenPresenter(
                 PlayerContainerContext,
                 ChestContainerContext,
@@ -320,9 +325,10 @@ namespace Game.Inventory.UI
 
             contextMenuView.ActionChosen += (kind, instanceId) =>
             {
-                if (kind == ContextMenuActionKind.Inspect || kind == ContextMenuActionKind.Compare)
+                if (kind == ContextMenuActionKind.Compare)
                 {
-                    OnEntrySelected(instanceId);
+                    CompareViewModel viewModel = _comparePresenter.Build(instanceId);
+                    compareView.Render(viewModel);
                     return;
                 }
 
@@ -588,6 +594,7 @@ namespace Game.Inventory.UI
             _dragDropController.SetActiveContainer(ChestContainerContext.service, _transferService, PlayerContainerContext, ChestContainerContext);
             _tooltipPresenter.SetActiveContainer(ChestContainerContext.service);
             _itemDetailsPresenter.SetActiveContainer(ChestContainerContext.service);
+            _comparePresenter.SetActiveContainer(ChestContainerContext.service);
         }
 
         public void CloseTransferScreen()
@@ -602,6 +609,7 @@ namespace Game.Inventory.UI
             _dragDropController.ClearActiveContainer();
             _tooltipPresenter.ClearActiveContainer();
             _itemDetailsPresenter.ClearActiveContainer();
+            _comparePresenter.ClearActiveContainer();
         }
 
         private bool _transferScreenIsOpen;
@@ -770,14 +778,13 @@ namespace Game.Inventory.UI
 
         private void CompareHovered()
         {
-            // placeholder - no dedicated comparison overlay exists yet, Inspect already
-            // shows comparison deltas in the details panel for equippable items, reuse it
             if (string.IsNullOrEmpty(_hoveredInstanceId))
             {
                 return;
             }
 
-            OnEntrySelected(_hoveredInstanceId);
+            CompareViewModel viewModel = _comparePresenter.Build(_hoveredInstanceId);
+            compareView.Render(viewModel);
         }
 
         private void AssignHoveredToQuickSlot(int slotIndex)

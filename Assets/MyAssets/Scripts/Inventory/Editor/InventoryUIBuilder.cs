@@ -232,6 +232,9 @@ namespace Game.Inventory.Editor
             SetAnchoredBox(containerScreenPanelGo, new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
             containerScreenPanelGo.transform.SetAsLastSibling();
 
+            CompareRowView compareRowPrefab = BuildCompareRowPrefab();
+            GameObject comparePanelGo = BuildComparePanel(canvas.transform, compareRowPrefab, out CompareView compareView);
+
             // ---------- InventoryScreenView wiring ----------
 
             QuickSlotInputBridge inputBridge = FindOrCreateQuickSlotInputBridge();
@@ -274,6 +277,7 @@ namespace Game.Inventory.Editor
             AssignField(compositionRoot, "transferScreenView", transferScreenView);
             AssignField(compositionRoot, "containerScreenView", containerScreenView);
             //AssignField(compositionRoot, "tabView", tabView);
+            AssignField(compositionRoot, "compareView", compareView);
             AssignField(compositionRoot, "tabBarGameObject", tabBar);
             AssignField(compositionRoot, "tabContentAreaGameObject", tabContentArea);
             
@@ -439,7 +443,170 @@ namespace Game.Inventory.Editor
             return go.AddComponent<TransformPlaceholderBehaviour>();
         }
 
+        private static GameObject BuildComparePanel(Transform parent, CompareRowView rowPrefab, out CompareView view)
+        {
+            GameObject panel = FindOrCreateChild(parent, "ComparePanel", typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            var panelRt = panel.GetComponent<RectTransform>();
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
+            panelRt.anchoredPosition = Vector2.zero;
+            panelRt.sizeDelta = new Vector2(900f, 0f);
+            panel.GetComponent<Image>().color = new Color(0.07f, 0.07f, 0.09f, 0.97f);
+            ApplySpriteIfAvailable(panel.GetComponent<Image>(), GetAssetLibrary()?.comparePanelBackground);
+
+            var vlg = panel.GetComponent<VerticalLayoutGroup>();
+            vlg.padding = new RectOffset(12, 12, 12, 12);
+            vlg.spacing = 6f;
+            vlg.childControlHeight = true;
+            vlg.childControlWidth = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+
+            var fitter = panel.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            GameObject headerRow = CreateChild(panel.transform, "HeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            headerRow.GetComponent<LayoutElement>().preferredHeight = 66f;
+            var headerHlg = headerRow.GetComponent<HorizontalLayoutGroup>();
+            headerHlg.spacing = 12f;
+            headerHlg.childAlignment = TextAnchor.MiddleCenter;
+            headerHlg.childControlWidth = true;
+            headerHlg.childControlHeight = true;
+            headerHlg.childForceExpandWidth = true;
+
+            GameObject closeButtonGo = CreateChild(headerRow.transform, "CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            var closeRt = closeButtonGo.GetComponent<RectTransform>();
+            closeRt.anchorMin = new Vector2(1f, 1f);
+            closeRt.anchorMax = new Vector2(1f, 1f);
+            closeRt.pivot = new Vector2(1f, 1f);
+            closeRt.sizeDelta = new Vector2(22f, 22f);
+            closeRt.anchoredPosition = new Vector2(-8f, -8f);
+            closeButtonGo.GetComponent<Image>().color = new Color(0.5f, 0.15f, 0.15f);
+            ApplySpriteIfAvailable(closeButtonGo.GetComponent<Image>(), GetAssetLibrary()?.iconButtonBackground);
+            TMP_Text closeText = CreateTmpChild(closeButtonGo.transform, "Text", 12f, TextAlignmentOptions.Center);
+            closeText.text = "X";
+            SetStretch(closeText.gameObject, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            //closeButtonGo.transform.SetAsLastSibling();
+
+            GameObject leftSide = CreateChild(headerRow.transform, "LeftSide", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            leftSide.GetComponent<LayoutElement>().flexibleWidth = 1f;
+            var leftVlg = leftSide.GetComponent<VerticalLayoutGroup>();
+            leftVlg.childAlignment = TextAnchor.MiddleCenter;
+            leftVlg.spacing = 2f;
+            leftVlg.padding = new RectOffset(0, 0, 0, 0);
+            leftVlg.childControlHeight = true;
+            leftVlg.childControlWidth = false;
+            leftVlg.childForceExpandWidth = false;
+            leftVlg.childForceExpandHeight = false;
+
+            GameObject leftIconGo = CreateChild(leftSide.transform, "IconImage", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            leftIconGo.GetComponent<LayoutElement>().preferredWidth = 44f;
+            leftIconGo.GetComponent<LayoutElement>().preferredHeight = 44f;
+            SetSize(leftIconGo, new Vector2(44f, 44f));
+            Image leftIcon = leftIconGo.GetComponent<Image>();
+            leftIcon.preserveAspect = true;
+
+            TMP_Text leftName = CreateTmpChild(leftSide.transform, "NameText", 12f, TextAlignmentOptions.Center);
+            LayoutElement leftNameLe = leftName.gameObject.AddComponent<LayoutElement>();
+            leftNameLe.preferredHeight = 16f;
+            leftNameLe.preferredWidth = 150f;
+
+            GameObject rightSide = CreateChild(headerRow.transform, "RightSide", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            rightSide.GetComponent<LayoutElement>().flexibleWidth = 1f;
+            var rightVlg = rightSide.GetComponent<VerticalLayoutGroup>();
+            rightVlg.childAlignment = TextAnchor.MiddleCenter;
+            rightVlg.spacing = 2f;
+            rightVlg.padding = new RectOffset(0, 0, 0, 0);
+            rightVlg.childControlHeight = true;
+            rightVlg.childControlWidth = false;
+            rightVlg.childForceExpandWidth = false;
+            rightVlg.childForceExpandHeight = false;
+
+            GameObject rightIconGo = CreateChild(rightSide.transform, "IconImage", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            rightIconGo.GetComponent<LayoutElement>().preferredWidth = 44f;
+            rightIconGo.GetComponent<LayoutElement>().preferredHeight = 44f;
+            SetSize(rightIconGo, new Vector2(44f, 44f));
+            Image rightIcon = rightIconGo.GetComponent<Image>();
+            rightIcon.preserveAspect = true;
+
+            TMP_Text rightName = CreateTmpChild(rightSide.transform, "NameText", 12f, TextAlignmentOptions.Center);
+            LayoutElement rightNameLe = rightName.gameObject.AddComponent<LayoutElement>();
+            rightNameLe.preferredHeight = 16f;
+            rightNameLe.preferredWidth = 150f;
+
+            GameObject rowParent = FindOrCreateChild(panel.transform, "RowParent", typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            var rowParentVlg = rowParent.GetComponent<VerticalLayoutGroup>();
+            rowParentVlg.spacing = 2f;
+            rowParentVlg.childControlHeight = true;
+            rowParentVlg.childControlWidth = true;
+            rowParentVlg.childForceExpandWidth = true;
+            rowParentVlg.childForceExpandHeight = false;
+            rowParent.GetComponent<LayoutElement>().preferredHeight = 0f;
+            rowParent.transform.SetSiblingIndex(1); // keep row list below the header row, above the floating close button
+
+            view = panel.GetComponent<CompareView>();
+            if (view == null) view = panel.AddComponent<CompareView>();
+
+            AssignField(view, "rootPanel", panel);
+            AssignField(view, "leftIconImage", leftIcon);
+            AssignField(view, "leftNameText", leftName);
+            AssignField(view, "rightIconImage", rightIcon);
+            AssignField(view, "rightNameText", rightName);
+            AssignField(view, "rowParent", rowParent.transform);
+            AssignField(view, "rowPrefab", rowPrefab);
+            AssignField(view, "closeButton", closeButtonGo.GetComponent<Button>());
+
+            panel.SetActive(false);
+            return panel;
+        }
+
         // ---------- Prefabs ----------
+
+        private static CompareRowView BuildCompareRowPrefab()
+        {
+            string path = $"{PrefabFolder}/CompareRow.prefab";
+            CompareRowView existing = LoadPrefabComponent<CompareRowView>(path);
+            if (existing != null) return existing;
+
+            var root = new GameObject("CompareRow", typeof(RectTransform), typeof(Image), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            root.GetComponent<LayoutElement>().preferredHeight = 22f;
+            root.GetComponent<LayoutElement>().minHeight = 22f;
+            root.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.03f);
+            ApplySpriteIfAvailable(root.GetComponent<Image>(), GetAssetLibrary()?.compareRowBackground);
+
+            var hlg = root.GetComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 4f;
+            hlg.childAlignment = TextAnchor.MiddleLeft;
+            hlg.childControlWidth = false;
+            hlg.childControlHeight = true;
+            hlg.padding = new RectOffset(6, 6, 1, 1);
+
+            TMP_Text labelText = CreateTmpChild(root.transform, "LabelText", 11f, TextAlignmentOptions.MidlineLeft);
+            SetPreferredWidth(labelText.gameObject, 140f);
+
+            TMP_Text leftValueText = CreateTmpChild(root.transform, "LeftValueText", 11f, TextAlignmentOptions.MidlineRight);
+            SetPreferredWidth(leftValueText.gameObject, 65f);
+
+            TMP_Text indicatorText = CreateTmpChild(root.transform, "IndicatorText", 12f, TextAlignmentOptions.Center);
+            indicatorText.fontStyle = FontStyles.Bold;
+            SetPreferredWidth(indicatorText.gameObject, 20f);
+
+            TMP_Text rightValueText = CreateTmpChild(root.transform, "RightValueText", 11f, TextAlignmentOptions.MidlineLeft);
+            SetPreferredWidth(rightValueText.gameObject, 65f);
+
+            CompareRowView view = root.AddComponent<CompareRowView>();
+            AssignField(view, "labelText", labelText);
+            AssignField(view, "leftValueText", leftValueText);
+            AssignField(view, "indicatorText", indicatorText);
+            AssignField(view, "rightValueText", rightValueText);
+            AssignField(view, "higherColor", new Color(0.3f, 0.8f, 0.3f));
+            AssignField(view, "lowerColor", new Color(0.85f, 0.25f, 0.2f));
+            AssignField(view, "equalColor", Color.gray);
+
+            return SaveAsPrefabAndDestroy<CompareRowView>(root, path);
+        }
 
         private static InventoryEntryView BuildInventoryEntryPrefab()
         {

@@ -117,5 +117,12 @@ namespace Game.Inventory.Config
         [Header("Drag Ghost")]
         [Tooltip("Static frame sprite shown behind the dragged item's icon while dragging (the icon itself changes per item, this frame stays constant). Recommended size: 48x48. Leave empty to show just the bare icon while dragging, no frame.")]
         public Sprite dragGhostFrame;
+
+        [Header("Compare Panel")]
+        [Tooltip("Background sprite for the item comparison panel. Recommended size: 9-sliced, e.g. 420x320.")]
+        public Sprite comparePanelBackground;
+
+        [Tooltip("Background sprite for a single compare stat row. Recommended size: 9-sliced, e.g. 380x28.")]
+        public Sprite compareRowBackground;
     }
 }
