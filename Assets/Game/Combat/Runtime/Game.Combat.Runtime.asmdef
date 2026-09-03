@@ -1,0 +1,18 @@
+{
+    "name": "Game.Combat.Runtime",
+    "rootNamespace": "Game.Combat",
+    "references": [
+        "Game.Inventory.Runtime",
+        "Game.Player.Runtime",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

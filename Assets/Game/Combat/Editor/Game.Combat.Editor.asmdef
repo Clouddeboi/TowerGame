@@ -1,0 +1,21 @@
+{
+    "name": "Game.Combat.Editor",
+    "rootNamespace": "Game.Combat.Editor",
+    "references": [
+        "Game.Inventory.Runtime",
+        "Game.Player.Runtime",
+        "Game.Combat.Runtime",
+        "Game.Inventory.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
