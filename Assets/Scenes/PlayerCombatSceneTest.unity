@@ -293,7 +293,7 @@ Transform:
   m_GameObject: {fileID: 335596009}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.6, z: 0}
+  m_LocalPosition: {x: 0, y: 0.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -586,6 +586,7 @@ MonoBehaviour:
   groundDetector: {fileID: 335596010}
   moveAction: {fileID: -5643789476848183038, guid: 39d42459ad265984c815dca7c6674751, type: 3}
   sprintAction: {fileID: 4525471352876397810, guid: 39d42459ad265984c815dca7c6674751, type: 3}
+  jumpAction: {fileID: 6931694307037406399, guid: 39d42459ad265984c815dca7c6674751, type: 3}
 --- !u!143 &1785008736
 CharacterController:
   m_ObjectHideFlags: 0
@@ -698,7 +699,7 @@ Transform:
   m_GameObject: {fileID: 1785008734}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.1, y: 0.53, z: -0.6}
+  m_LocalPosition: {x: 0.1, y: 0.593, z: -0.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
