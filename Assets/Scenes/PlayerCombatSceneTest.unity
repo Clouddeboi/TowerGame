@@ -676,6 +676,7 @@ GameObject:
   - component: {fileID: 1785008737}
   - component: {fileID: 1785008736}
   - component: {fileID: 1785008735}
+  - component: {fileID: 1785008741}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -697,6 +698,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Player.Runtime::Game.Player.Movement.PlayerMovementController
   config: {fileID: 11400000, guid: 5597a990353fd714a82f4f5a665de0a7, type: 2}
   groundDetector: {fileID: 335596010}
+  stanceController: {fileID: 1785008741}
   moveAction: {fileID: -5643789476848183038, guid: 39d42459ad265984c815dca7c6674751, type: 3}
   sprintAction: {fileID: 4525471352876397810, guid: 39d42459ad265984c815dca7c6674751, type: 3}
   jumpAction: {fileID: 6931694307037406399, guid: 39d42459ad265984c815dca7c6674751, type: 3}
@@ -819,6 +821,20 @@ Transform:
   - {fileID: 335596011}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1785008741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1785008734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cd4347b2805d0d4cbcb136ccb52d48b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Player.Runtime::Game.Player.Stance.PlayerStanceController
+  config: {fileID: 11400000, guid: 122fa531d468d804a901214a0e190ea8, type: 2}
+  crouchAction: {fileID: -3797787054298937045, guid: 39d42459ad265984c815dca7c6674751, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

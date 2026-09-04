@@ -1,10 +1,10 @@
 ﻿<Solution>
   <Project Path="Game.Inventory.Runtime.csproj" />
+  <Project Path="Game.Player.Runtime.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Game.Inventory.UI.csproj" />
   <Project Path="Game.Inventory.Tests.EditMode.csproj" />
   <Project Path="Game.Inventory.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Game.Inventory.Tests.PlayMode.csproj" />
-  <Project Path="Game.Player.Runtime.csproj" />
 </Solution>

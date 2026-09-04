@@ -1,4 +1,5 @@
 {
+    "version": 1,
     "name": "PlayerInputActions",
     "maps": [
         {
@@ -36,6 +37,15 @@
                     "name": "Sprint",
                     "type": "Button",
                     "id": "53b7b6ff-7b34-4b35-8d0d-c7a4ec6b8e3a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Crouch",
+                    "type": "Button",
+                    "id": "ca911a5b-6453-4e1f-9c8b-e5c813972421",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -172,6 +182,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c67fc551-c47f-4c04-b112-b6e5660ba2af",
+                    "path": "<Keyboard>/ctrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Crouch",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

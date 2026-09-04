@@ -10,6 +10,7 @@ namespace Game.Player.Movement
     {
         [SerializeField] private PlayerMovementConfig config;
         [SerializeField] private PlayerGroundDetector groundDetector;
+        [SerializeField] private Stance.PlayerStanceController stanceController;
 
         [Header("Input")]
         [SerializeField] private InputActionReference moveAction;
@@ -97,8 +98,9 @@ namespace Game.Player.Movement
             _isSliding = isOnUnwalkableSlope;
 
             bool sprintAllowedBySlope = !isGrounded || groundHit.slopeAngle <= config.MaxSprintableSlopeAngle;
-            bool wantsToSprint = _sprintHeld && moveInput.sqrMagnitude > 0.01f && sprintAllowedBySlope;
-
+            bool wantsToSprint = _sprintHeld && moveInput.sqrMagnitude > 0.01f && sprintAllowedBySlope
+                && (stanceController == null || !stanceController.IsCrouching);
+            
             if (isOnUnwalkableSlope)
             {
                 UpdateSlideMovement(groundHit);
@@ -264,13 +266,22 @@ namespace Game.Player.Movement
 
         private float ResolveTargetSpeed(MovementState state)
         {
+            float baseSpeed;
+
             switch (state)
             {
-                case MovementState.Sprinting: return config.SprintSpeed;
-                case MovementState.Running: return config.RunSpeed;
-                case MovementState.Walking: return config.WalkSpeed;
+                case MovementState.Sprinting: baseSpeed = config.SprintSpeed; break;
+                case MovementState.Running: baseSpeed = config.RunSpeed; break;
+                case MovementState.Walking: baseSpeed = config.WalkSpeed; break;
                 default: return 0f;
             }
+
+            if (stanceController != null && stanceController.IsCrouching)
+            {
+                baseSpeed *= stanceController.CrouchSpeedMultiplierValue;
+            }
+
+            return baseSpeed;
         }
 
         private float ResolveAcceleration(MovementState state, bool isAccelerating)
